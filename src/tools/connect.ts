@@ -24,7 +24,7 @@ export type ConnectParams = z.infer<typeof connectSchema>;
 
 export const connectTool: Tool = {
   name: 'connect',
-  description: 'Establish connection to MongoDB using connection string',
+  description: 'Establish connection to MongoDB using connection string. IMPORTANT: Call service_info first to check current connection status. If service_info shows hasConnectionString=true, you can call connect() without parameters to use the available connection string.',
   inputSchema: connectSchema,
   examples: [
     {
