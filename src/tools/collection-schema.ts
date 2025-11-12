@@ -1,23 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { MongoDBClient } from '../mongodb-client.js';
+import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { generateTempFilePath } from '../utils/streaming.js';
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
-
-// Define the Tool type
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: object;
-  // Examples can contain any structure based on the tool's requirements
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  examples?: any[];
-  // Tool implementation params are dynamic based on the specific tool schema
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  implementation: (_params: any) => Promise<any>;
-}
 
 const collectionSchemaSchema = z.object({
   database: z.string().describe('Database name'),
@@ -28,117 +15,6 @@ const collectionSchemaSchema = z.object({
 });
 
 export type CollectionSchemaParams = z.infer<typeof collectionSchemaSchema>;
-
-export const collectionSchemaTool: Tool = {
-  name: 'collection-schema',
-  description: 'Describe the schema for a collection by sampling documents',
-  inputSchema: collectionSchemaSchema,
-  examples: [
-    {
-      input: { database: 'testdb', collection: 'users', sampleSize: 10 },
-      output: {
-        database: 'testdb',
-        collection: 'users',
-        sampleSize: 10,
-        schema: {
-          properties: {
-            _id: { type: 'objectId' },
-            name: { type: 'string' },
-            age: { type: 'integer' },
-            email: { type: 'string' },
-            isActive: { type: 'boolean' },
-          },
-          required: ['_id', 'name', 'email'],
-        },
-      },
-      description: 'Get schema information for the users collection in testdb database by sampling 10 documents',
-    },
-  ],
-  async implementation(params: CollectionSchemaParams) {
-    const mongoClient = MongoDBClient.getInstance();
-
-    if (!mongoClient.isConnectedToMongoDB()) {
-      throw new Error('Not connected to MongoDB. Please connect first.');
-    }
-
-    try {
-      const db = mongoClient.getDatabase(params.database);
-      const collection = db.collection(params.collection);
-
-      if (params.saveToFile) {
-        // For saving to file, fetch documents and process
-        const documents = await collection.find({}).limit(params.sampleSize).toArray();
-        let response;
-
-        if (documents.length === 0) {
-          response = {
-            database: params.database,
-            collection: params.collection,
-            sampleSize: params.sampleSize,
-            schema: { properties: {}, required: [] },
-            message: 'No documents found in the collection to infer schema',
-          };
-        } else {
-          // Infer schema from the documents
-          const schema = inferSchema(documents);
-
-          response = {
-            database: params.database,
-            collection: params.collection,
-            sampleSize: documents.length, // Return actual sample size
-            schema,
-          };
-        }
-
-        const filePath = params.filePath ?? generateTempFilePath();
-        // Ensure directory exists
-        const dir = dirname(filePath);
-
-        mkdirSync(dir, { recursive: true });
-
-        // Write response to file
-        writeFileSync(filePath, JSON.stringify(response, null, 2), 'utf8');
-
-        return toolSuccess({
-          savedToFile: true,
-          filePath,
-          database: params.database,
-          collection: params.collection,
-          message: response.message ?? 'Schema inference completed',
-        });
-      } else {
-        // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
-        // Sample documents from the collection
-        const documents = await collection.find({}).limit(params.sampleSize).toArray();
-        let response;
-
-        if (documents.length === 0) {
-          response = {
-            database: params.database,
-            collection: params.collection,
-            sampleSize: params.sampleSize,
-            schema: { properties: {}, required: [] },
-            message: 'No documents found in the collection to infer schema',
-          };
-        } else {
-          // Infer schema from the documents
-          const schema = inferSchema(documents);
-
-          response = {
-            database: params.database,
-            collection: params.collection,
-            sampleSize: documents.length, // Return actual sample size
-            schema,
-          };
-        }
-
-        return toolSuccess(response);
-      }
-    } catch (error) {
-      return toolError(error);
-    }
-  },
-};
 
 // MongoDB documents can have any structure, so we need to use any for the schema inference
 
@@ -264,15 +140,99 @@ function isValidDate(dateString: string): boolean {
 }
 
 // Export the registration function for the server
-// The _client parameter is required to match the registration function signature used by other tools
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function registerCollectionSchemaTool(server: McpServer, _client: MongoDBClient) {
+// The client parameter is required to match the registration function signature used by other tools
+export function registerCollectionSchemaTool(server: McpServer, client: MongoDBClient) {
   server.registerTool(
-    collectionSchemaTool.name,
+    'collection-schema',
     {
-      description: collectionSchemaTool.description,
+      title: 'Collection Schema',
+      description: 'Describe the schema for a collection by sampling documents',
       inputSchema: collectionSchemaSchema.shape,
+      annotations: {
+        readOnlyHint: true,
+      },
     },
-    collectionSchemaTool.implementation,
+    async (params: CollectionSchemaParams) => {
+      if (!client.isConnectedToMongoDB()) {
+        throw new Error('Not connected to MongoDB. Please connect first.');
+      }
+
+      try {
+        const db = client.getDatabase(params.database);
+        const collection = db.collection(params.collection);
+
+        if (params.saveToFile) {
+          // For saving to file, fetch documents and process
+          const documents = await collection.find({}).limit(params.sampleSize).toArray();
+          let response;
+
+          if (documents.length === 0) {
+            response = {
+              database: params.database,
+              collection: params.collection,
+              sampleSize: params.sampleSize,
+              schema: { properties: {}, required: [] },
+              message: 'No documents found in the collection to infer schema',
+            };
+          } else {
+            // Infer schema from the documents
+            const schema = inferSchema(documents);
+
+            response = {
+              database: params.database,
+              collection: params.collection,
+              sampleSize: documents.length, // Return actual sample size
+              schema,
+            };
+          }
+
+          const filePath = params.filePath ?? generateTempFilePath();
+          // Ensure directory exists
+          const dir = dirname(filePath);
+
+          mkdirSync(dir, { recursive: true });
+
+          // Write response to file
+          writeFileSync(filePath, JSON.stringify(response, null, 2), 'utf8');
+
+          return toolSuccess({
+            savedToFile: true,
+            filePath,
+            database: params.database,
+            collection: params.collection,
+            message: response.message ?? 'Schema inference completed',
+          });
+        } else {
+          // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
+          // Sample documents from the collection
+          const documents = await collection.find({}).limit(params.sampleSize).toArray();
+          let response;
+
+          if (documents.length === 0) {
+            response = {
+              database: params.database,
+              collection: params.collection,
+              sampleSize: params.sampleSize,
+              schema: { properties: {}, required: [] },
+              message: 'No documents found in the collection to infer schema',
+            };
+          } else {
+            // Infer schema from the documents
+            const schema = inferSchema(documents);
+
+            response = {
+              database: params.database,
+              collection: params.collection,
+              sampleSize: documents.length, // Return actual sample size
+              schema,
+            };
+          }
+
+          return toolSuccess(response);
+        }
+      } catch (error) {
+        return toolError(error);
+      }
+    },
   );
 }

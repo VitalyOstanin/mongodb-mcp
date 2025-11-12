@@ -26,7 +26,7 @@ export class MongoDBClient {
     return this.readonlyMode;
   }
 
-  async connect(connectionString?: string, readonlyMode: boolean = false): Promise<void> {
+  async connect(connectionString?: string, readonlyMode: boolean = true): Promise<void> {
     // If connection string is not provided, check env var
     const connString = connectionString ?? process.env.MONGODB_CONNECTION_STRING;
 
@@ -190,9 +190,12 @@ export class MongoDBClient {
   }
 
   getConnectionInfo(): { isConnected: boolean; hasConnectionString: boolean } {
+    // Check if we have a connection string either from active connection or environment variable
+    const hasConnectionString = !((this.connectionString) && (process.env.MONGODB_CONNECTION_STRING));
+
     return {
       isConnected: this.isConnected,
-      hasConnectionString: !!this.connectionString,
+      hasConnectionString,
     };
   }
 

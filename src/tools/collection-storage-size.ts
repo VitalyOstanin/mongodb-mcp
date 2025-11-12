@@ -1,20 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { MongoDBClient } from '../mongodb-client.js';
+import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-
-// Define the Tool type
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: object;
-  // Examples can contain any structure based on the tool's requirements
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  examples?: any[];
-  // Tool implementation params are dynamic based on the specific tool schema
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  implementation: (_params: any) => Promise<any>;
-}
 
 const collectionStorageSizeSchema = z.object({
   database: z.string().describe('Database name'),
@@ -22,51 +9,6 @@ const collectionStorageSizeSchema = z.object({
 });
 
 export type CollectionStorageSizeParams = z.infer<typeof collectionStorageSizeSchema>;
-
-export const collectionStorageSizeTool: Tool = {
-  name: 'collection-storage-size',
-  description: 'Get storage size of a specific collection',
-  inputSchema: collectionStorageSizeSchema,
-  examples: [
-    {
-      input: { database: 'testdb', collection: 'users' },
-      output: {
-        database: 'testdb',
-        collection: 'users',
-        size: 8192,
-        sizeFormatted: '8.00 KB',
-      },
-      description: 'Get storage size of the users collection in testdb database',
-    },
-  ],
-  async implementation(params: CollectionStorageSizeParams) {
-    const mongoClient = MongoDBClient.getInstance();
-
-    if (!mongoClient.isConnectedToMongoDB()) {
-      throw new Error('Not connected to MongoDB. Please connect first.');
-    }
-
-    try {
-      const db = mongoClient.getDatabase(params.database);
-      // Get collection stats which includes size information
-      const stats = await db.admin().command({ collStats: params.collection });
-      // The stats object contains size information
-      const size = stats.size ?? stats.storageSize ?? 0;
-      // Format size in human-readable form
-      const sizeFormatted = formatBytes(size);
-      const response = {
-        database: params.database,
-        collection: params.collection,
-        size,
-        sizeFormatted,
-      };
-
-      return toolSuccess(response);
-    } catch (error) {
-      return toolError(error);
-    }
-  },
-};
 
 // Helper function to format bytes in human-readable form
 function formatBytes(bytes: number): string {
@@ -80,15 +22,42 @@ function formatBytes(bytes: number): string {
 }
 
 // Export the registration function for the server
-// The _client parameter is required to match the registration function signature used by other tools
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function registerCollectionStorageSizeTool(server: McpServer, _client: MongoDBClient) {
+// The client parameter is required to match the registration function signature used by other tools
+export function registerCollectionStorageSizeTool(server: McpServer, client: MongoDBClient) {
   server.registerTool(
-    collectionStorageSizeTool.name,
+    'collection-storage-size',
     {
-      description: collectionStorageSizeTool.description,
+      title: 'Collection Storage Size',
+      description: 'Get storage size of a specific collection',
       inputSchema: collectionStorageSizeSchema.shape,
+      annotations: {
+        readOnlyHint: true,
+      },
     },
-    collectionStorageSizeTool.implementation,
+    async (params: CollectionStorageSizeParams) => {
+      if (!client.isConnectedToMongoDB()) {
+        throw new Error('Not connected to MongoDB. Please connect first.');
+      }
+
+      try {
+        const db = client.getDatabase(params.database);
+        // Get collection stats which includes size information
+        const stats = await db.admin().command({ collStats: params.collection });
+        // The stats object contains size information
+        const size = stats.size ?? stats.storageSize ?? 0;
+        // Format size in human-readable form
+        const sizeFormatted = formatBytes(size);
+        const response = {
+          database: params.database,
+          collection: params.collection,
+          size,
+          sizeFormatted,
+        };
+
+        return toolSuccess(response);
+      } catch (error) {
+        return toolError(error);
+      }
+    },
   );
 }

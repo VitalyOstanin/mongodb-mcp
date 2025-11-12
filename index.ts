@@ -18,10 +18,7 @@ async function main() {
       default: true,
     })
     .parseAsync();
-  // Check for environment variable override - if MONGODB_READONLY is set, it takes precedence
-  // If MONGODB_READONLY is not set, use the command line argument (which defaults to true)
-  const envReadOnly = process.env.MONGODB_READONLY;
-  const readOnlyMode = envReadOnly !== undefined ? envReadOnly.toLowerCase() === 'true' : argv['read-only'];
+  const readOnlyMode = argv['read-only'];
   const transport = new StdioServerTransport();
   const server = new MongoDBServer(argv['auto-connect'], readOnlyMode);
 

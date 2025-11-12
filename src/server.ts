@@ -44,6 +44,8 @@ export class MongoDBServer {
     initializeTimezone(config.timezone);
 
     this.mongoClient = MongoDBClient.getInstance();
+    // Set the readonly mode immediately when creating the server
+    this.mongoClient.setReadonlyMode(readonlyMode);
 
     // Import and register the connect tool
     registerConnectTool(this.server, this.mongoClient);
