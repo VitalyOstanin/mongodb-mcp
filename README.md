@@ -49,9 +49,9 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 
 - Node.js ≥ 20
 - Environment variables:
-  - `MONGODB_CONNECTION_STRING` — MongoDB connection string (mongodb:// or mongodb+srv:// format)
-  - `MONGODB_DEFAULT_DATABASE` — optional default database name for operations
-  - `MONGODB_TIMEZONE` — optional timezone for date operations (default: `Europe/Moscow`), must be a valid IANA timezone identifier (e.g., `Europe/London`, `America/New_York`, `Asia/Tokyo`)
+  - `MONGODB_MCP_CONNECTION_STRING` — MongoDB connection string (mongodb:// or mongodb+srv:// format)
+  - `MONGODB_MCP_DEFAULT_DATABASE` — optional default database name for operations
+  - `MONGODB_MCP_TIMEZONE` — optional timezone for date operations (default: `Europe/Moscow`), must be a valid IANA timezone identifier (e.g., `Europe/London`, `America/New_York`, `Asia/Tokyo`)
 
 ## Installation
 
@@ -60,8 +60,8 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 You can run the server directly with npx without installation:
 
 ```bash
-MONGODB_CONNECTION_STRING="mongodb://localhost:27017" \
-MONGODB_DEFAULT_DATABASE="myapp" \
+MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017" \
+MONGODB_MCP_DEFAULT_DATABASE="myapp" \
 npx -y @vitalyostanin/mongodb-mcp@latest
 ```
 
@@ -71,8 +71,8 @@ Install using Claude MCP CLI:
 
 ```bash
 claude mcp add --scope user \
---env MONGODB_CONNECTION_STRING='mongodb://localhost:27017' \
---env MONGODB_DEFAULT_DATABASE='myapp' \
+--env MONGODB_MCP_CONNECTION_STRING='mongodb://localhost:27017' \
+--env MONGODB_MCP_DEFAULT_DATABASE='myapp' \
 mongodb-mcp -- npx -y @vitalyostanin/mongodb-mcp@latest
 ```
 
@@ -196,8 +196,8 @@ npm run dev:watch
 ## Running the server (stdio)
 
 ```bash
-MONGODB_CONNECTION_STRING="mongodb://localhost:27017" \
-MONGODB_DEFAULT_DATABASE="myapp" \
+MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017" \
+MONGODB_MCP_DEFAULT_DATABASE="myapp" \
 node dist/index.js
 ```
 
@@ -209,8 +209,8 @@ command = "npx"
 args = ["-y", "@vitalyostanin/mongodb-mcp@latest"]
 
 [mcp_servers.mongodb-mcp.env]
-MONGODB_CONNECTION_STRING = "mongodb://localhost:27017"
-MONGODB_DEFAULT_DATABASE = "myapp"
+MONGODB_MCP_CONNECTION_STRING = "mongodb://localhost:27017"
+MONGODB_MCP_DEFAULT_DATABASE = "myapp"
 ```
 
 ## Configuration for Claude Code CLI
@@ -228,15 +228,15 @@ To use this MCP server with [Claude Code CLI](https://github.com/anthropics/clau
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
+        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
       }
     }
   }
 }
 ```
 
-**Note:** This configuration uses npx to run the published package. For local development, use `"command": "node"` with `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. The `MONGODB_TIMEZONE` environment variable is optional.
+**Note:** This configuration uses npx to run the published package. For local development, use `"command": "node"` with `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. The `MONGODB_MCP_TIMEZONE` environment variable is optional.
 
 ## Configuration for VS Code Cline
 
@@ -254,15 +254,15 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
+        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
       }
     }
   }
 }
 ```
 
-**Note:** This configuration uses npx to run the published package. For local development, use `"command": "node"` with `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. The `MONGODB_TIMEZONE` environment variable is optional.
+**Note:** This configuration uses npx to run the published package. For local development, use `"command": "node"` with `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. The `MONGODB_MCP_TIMEZONE` environment variable is optional.
 
 ## MCP Tools
 

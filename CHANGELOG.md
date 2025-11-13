@@ -14,7 +14,7 @@
 - Monitoring tools for database health and performance metrics
 - Import/export capabilities for large datasets
 - Basic authentication and connection pooling
-- Configuration via environment variables (MONGODB_CONNECTION_STRING)
+- Configuration via environment variables (MONGODB_MCP_CONNECTION_STRING)
 - TypeScript implementation with proper type safety
 - MCP tool registration and server infrastructure
 

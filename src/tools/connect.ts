@@ -17,46 +17,36 @@ interface Tool {
 }
 
 const connectSchema = z.object({
-  connectionString: z.string().optional(),
 });
 
 export type ConnectParams = z.infer<typeof connectSchema>;
 
 export const connectTool: Tool = {
   name: 'connect',
-  description: 'Establish connection to MongoDB using connection string. IMPORTANT: Call service_info first to check current connection status. If service_info shows hasConnectionString=true, you can call connect() without parameters to use the available connection string.',
+  description: 'Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING. Call service_info first to check current connection status.',
   inputSchema: connectSchema,
   examples: [
-    {
-      input: {
-        connectionString: 'mongodb://localhost:27017',
-      },
-      output: {
-        success: true,
-        message: 'Connected to MongoDB successfully',
-        isConnected: true,
-      },
-      description: 'Connect to MongoDB using provided connection string',
-    },
     {
       input: {},
       output: {
         success: true,
-        message: 'Connected to MongoDB successfully using MONGODB_CONNECTION_STRING environment variable',
+        message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
         isConnected: true,
       },
       description: 'Connect to MongoDB using connection string from environment variable',
     },
   ],
-  async implementation(params: ConnectParams) {
+  // Parameters are required by the tool interface but not used since connect doesn't need input parameters
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async implementation(_params: ConnectParams) {
     const mongoClient = MongoDBClient.getInstance();
 
     try {
-      // Get the connection string that will be used (provided or from env)
-      const connectionString = params.connectionString ?? process.env.MONGODB_CONNECTION_STRING;
+      // Only use the connection string from environment variable
+      const connectionString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
       if (!connectionString) {
-        throw new Error('Connection string is required. Either pass it as a parameter or set MONGODB_CONNECTION_STRING environment variable.');
+        return toolError(new Error('Connection string is required. Please set MONGODB_MCP_CONNECTION_STRING environment variable.'));
       }
 
       // Check if we're already connected to the same connection string
@@ -73,13 +63,11 @@ export const connectTool: Tool = {
       }
 
       // If connection string is different or we're not connected, connect
-      await mongoClient.connect(params.connectionString);
+      await mongoClient.connect();
 
       const response = {
         success: true,
-        message: params.connectionString
-          ? 'Connected to MongoDB successfully'
-          : 'Connected to MongoDB successfully using MONGODB_CONNECTION_STRING environment variable',
+        message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
         isConnected: true,
       };
 

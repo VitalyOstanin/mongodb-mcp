@@ -17,23 +17,23 @@ describe('Config and Service Info Tests', () => {
     process.env = originalEnv;
   });
 
-  describe('MONGODB_CONNECTION_STRING optional validation', () => {
-    it('should allow loading config without MONGODB_CONNECTION_STRING', () => {
+  describe('MONGODB_MCP_CONNECTION_STRING validation', () => {
+    it('should allow loading config without MONGODB_MCP_CONNECTION_STRING', () => {
       // Remove the connection string from environment
-      delete process.env.MONGODB_CONNECTION_STRING;
+      delete process.env.MONGODB_MCP_CONNECTION_STRING;
 
       // This should not throw an error anymore
       expect(() => {
         loadConfig();
-      }).not.toThrow();
+      }).toThrow(); // Since the connection string is now mandatory, this should throw an error
 
-      const config = loadConfig();
-
-      expect(config.connectionString).toBeUndefined();
+      expect(() => {
+        loadConfig();
+      }).toThrow('MongoDB configuration error: missing environment variables: MONGODB_MCP_CONNECTION_STRING');
     });
 
-    it('should still accept MONGODB_CONNECTION_STRING when provided', () => {
-      process.env.MONGODB_CONNECTION_STRING = 'mongodb://localhost:27017';
+    it('should accept MONGODB_MCP_CONNECTION_STRING when provided', () => {
+      process.env.MONGODB_MCP_CONNECTION_STRING = 'mongodb://localhost:27017';
 
       const config = loadConfig();
 
@@ -56,10 +56,9 @@ describe('Config and Service Info Tests', () => {
       } as unknown as jest.Mocked<MongoDBClient>;
     });
 
-    it('should return correct hasConnectionString based on client connection info, not env var', async () => {
+    it('should return correct connection status', async () => {
       mockClient.getConnectionInfo.mockReturnValue({
         isConnected: true,
-        hasConnectionString: true, // This client has a connection string from connect() call
       });
       mockClient.isReadonly.mockReturnValue(false);
 
@@ -75,16 +74,12 @@ describe('Config and Service Info Tests', () => {
       const result = await handler(params);
       const response = JSON.parse(result.content[0].text);
 
-      // The response should indicate that there is a connection string
-      // based on the client's connection info, not environment variable
-      expect(response.payload.hasConnectionString).toBe(true);
       expect(response.payload.isConnected).toBe(true);
     });
 
-    it('should return hasConnectionString false when client has no connection string', async () => {
+    it('should return correct connection status when client is not connected', async () => {
       mockClient.getConnectionInfo.mockReturnValue({
         isConnected: false,
-        hasConnectionString: false,
       });
       mockClient.isReadonly.mockReturnValue(false);
 
@@ -100,7 +95,6 @@ describe('Config and Service Info Tests', () => {
       const result = await handler(params);
       const response = JSON.parse(result.content[0].text);
 
-      expect(response.payload.hasConnectionString).toBe(false);
       expect(response.payload.isConnected).toBe(false);
     });
 
@@ -108,7 +102,6 @@ describe('Config and Service Info Tests', () => {
       // Test with readonly = true
       mockClient.getConnectionInfo.mockReturnValue({
         isConnected: true,
-        hasConnectionString: true,
       });
       mockClient.isReadonly.mockReturnValue(true);
 

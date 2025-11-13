@@ -51,9 +51,9 @@ MCP сервер для всесторонней интеграции с MongoDB
 
 - Node.js ≥ 20
 - Переменные окружения:
-  - `MONGODB_CONNECTION_STRING` — строка подключения к MongoDB (в формате mongodb:// или mongodb+srv://)
-  - `MONGODB_DEFAULT_DATABASE` — опциональное имя базы данных по умолчанию для операций
-  - `MONGODB_TIMEZONE` — опциональная таймзона для операций с датами (по умолчанию: `Europe/Moscow`), должна быть валидным идентификатором IANA (например, `Europe/London`, `America/New_York`, `Asia/Tokyo`)
+  - `MONGODB_MCP_CONNECTION_STRING` — строка подключения к MongoDB (в формате mongodb:// или mongodb+srv://)
+  - `MONGODB_MCP_DEFAULT_DATABASE` — опциональное имя базы данных по умолчанию для операций
+  - `MONGODB_MCP_TIMEZONE` — опциональная таймзона для операций с датами (по умолчанию: `Europe/Moscow`), должна быть валидным идентификатором IANA (например, `Europe/London`, `America/New_York`, `Asia/Tokyo`)
 
 ## Установка
 
@@ -62,8 +62,8 @@ MCP сервер для всесторонней интеграции с MongoDB
 Вы можете запустить сервер напрямую с помощью npx без установки:
 
 ```bash
-MONGODB_CONNECTION_STRING="mongodb://localhost:27017" \
-MONGODB_DEFAULT_DATABASE="myapp" \
+MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017" \
+MONGODB_MCP_DEFAULT_DATABASE="myapp" \
 npx -y @vitalyostanin/mongodb-mcp@latest
 ```
 
@@ -73,8 +73,8 @@ npx -y @vitalyostanin/mongodb-mcp@latest
 
 ```bash
 claude mcp add --scope user \
---env MONGODB_CONNECTION_STRING='mongodb://localhost:27017' \
---env MONGODB_DEFAULT_DATABASE='myapp' \
+--env MONGODB_MCP_CONNECTION_STRING='mongodb://localhost:27017' \
+--env MONGODB_MCP_DEFAULT_DATABASE='myapp' \
 mongodb-mcp -- npx -y @vitalyostanin/mongodb-mcp@latest
 ```
 
@@ -187,8 +187,8 @@ npm run dev:watch
 ## Запуск сервера (stdio)
 
 ```bash
-MONGODB_CONNECTION_STRING="mongodb://localhost:27017" \
-MONGODB_DEFAULT_DATABASE="myapp" \
+MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017" \
+MONGODB_MCP_DEFAULT_DATABASE="myapp" \
 node dist/index.js
 ```
 
@@ -200,8 +200,8 @@ command = "npx"
 args = ["-y", "@vitalyostanin/mongodb-mcp@latest"]
 
 [mcp_servers.mongodb-mcp.env]
-MONGODB_CONNECTION_STRING = "mongodb://localhost:27017"
-MONGODB_DEFAULT_DATABASE = "myapp"
+MONGODB_MCP_CONNECTION_STRING = "mongodb://localhost:27017"
+MONGODB_MCP_DEFAULT_DATABASE = "myapp"
 ```
 
 ## Конфигурация для Claude Code CLI
@@ -219,15 +219,15 @@ MONGODB_DEFAULT_DATABASE = "myapp"
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
+        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
       }
     }
   }
 }
 ```
 
-**Примечание:** Эта конфигурация использует npx для запуска опубликованного пакета. Для локальной разработки используйте `"command": "node"` с `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. Переменная окружения `MONGODB_TIMEZONE` является опциональной.
+**Примечание:** Эта конфигурация использует npx для запуска опубликованного пакета. Для локальной разработки используйте `"command": "node"` с `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. Переменная окружения `MONGODB_MCP_TIMEZONE` является опциональной.
 
 ## Конфигурация для VS Code Cline
 
@@ -245,15 +245,15 @@ MONGODB_DEFAULT_DATABASE = "myapp"
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
+        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
       }
     }
   }
 }
 ```
 
-**Примечание:** Эта конфигурация использует npx для запуска опубликованного пакета. Для локальной разработки используйте `"command": "node"` с `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. Переменная окружения `MONGODB_TIMEZONE` является опциональной.
+**Примечание:** Эта конфигурация использует npx для запуска опубликованного пакета. Для локальной разработки используйте `"command": "node"` с `"args": ["/absolute/path/to/mongodb-mcp/dist/index.js"]`. Переменная окружения `MONGODB_MCP_TIMEZONE` является опциональной.
 
 ## MCP Инструменты
 

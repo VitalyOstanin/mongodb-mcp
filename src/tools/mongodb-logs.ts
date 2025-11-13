@@ -31,7 +31,7 @@ export function registerMongodbLogsTool(server: McpServer, client: MongoDBClient
     },
     async (params: MongodbLogsParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {

@@ -24,7 +24,7 @@ export function registerListCollectionsTool(server: McpServer, client: MongoDBCl
     },
     async (params: ListCollectionsParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {

@@ -4,6 +4,7 @@ import { MongoDBClient } from "./mongodb-client.js";
 import { loadConfig } from "./config.js";
 import { initializeTimezone } from "./utils/date.js";
 import { registerConnectTool } from "./tools/connect.js";
+import { registerDisconnectTool } from "./tools/disconnect.js";
 import { registerListDatabasesTool } from "./tools/list-databases.js";
 import { registerListCollectionsTool } from "./tools/list-collections.js";
 import { registerDbStatsTool } from "./tools/db-stats.js";
@@ -49,6 +50,7 @@ export class MongoDBServer {
 
     // Import and register the connect tool
     registerConnectTool(this.server, this.mongoClient);
+    registerDisconnectTool(this.server, this.mongoClient);
     registerListDatabasesTool(this.server, this.mongoClient);
     registerListCollectionsTool(this.server, this.mongoClient);
     registerDbStatsTool(this.server, this.mongoClient);
@@ -65,11 +67,11 @@ export class MongoDBServer {
 
     // If auto-connect option is enabled, connect to MongoDB on startup
     if (autoConnect) {
-      const connectionString = process.env.MONGODB_CONNECTION_STRING;
+      const connectionString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
       if (connectionString) {
         // Connect in readonly mode if it's enabled
-        this.mongoClient.connect(connectionString, readonlyMode).catch(error => {
+        this.mongoClient.connect(readonlyMode).catch(error => {
           console.error("Failed to auto-connect to MongoDB:", error);
         });
       }

@@ -25,16 +25,27 @@ export function registerServiceInfoTool(server: McpServer, client: MongoDBClient
     },
     async () => {
       const connectionInfo = client.getConnectionInfo();
-      const response = {
+      const baseResponse = {
         name: 'mongodb-mcp',
         isConnected: connectionInfo.isConnected,
-        hasConnectionString: connectionInfo.hasConnectionString,
         readonly: client.isReadonly(),
         version: VERSION,
         timezone: getTimezone(),
       };
+      // Create extended response based on connection status
+      let finalResponse;
 
-      return toolSuccess(response);
+      if (!connectionInfo.isConnected) {
+        finalResponse = {
+          ...baseResponse,
+          ...(connectionInfo.disconnectReason && { disconnectReason: connectionInfo.disconnectReason }),
+          ...(connectionInfo.connectionError && { connectionError: connectionInfo.connectionError }),
+        };
+      } else {
+        finalResponse = baseResponse;
+      }
+
+      return toolSuccess(finalResponse);
     },
   );
 }

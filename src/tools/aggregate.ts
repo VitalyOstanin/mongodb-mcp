@@ -29,7 +29,7 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
     },
     async (params: AggregateParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {
@@ -44,7 +44,7 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
             const stageName = Object.keys(stage)[0];
 
             if (stageName && dangerousStages.includes(stageName)) {
-              throw new Error(`Aggregation stage '${stageName}' is not allowed in read-only mode`);
+              return toolError(new Error(`Aggregation stage '${stageName}' is not allowed in read-only mode`));
             }
           }
         }

@@ -61,9 +61,18 @@ describe('CollectionSchema Tool', () => {
       database: 'testdb',
       collection: 'testcollection',
     };
+    const result = await handler(params);
 
-    // We need to catch the error since the tool throws instead of returning toolError
-    await expect(handler(params)).rejects.toThrow('Not connected to MongoDB. Please connect first.');
+    expect(result.isError).toBe(true);
+    expect(result.content).toEqual([
+      {
+        type: "text",
+        text: JSON.stringify({
+          name: "Error",
+          message: "Not connected to MongoDB. Please connect first.",
+        }),
+      },
+    ]);
   });
 
   it('should get collection schema successfully with sample documents in non-read-only mode', async () => {

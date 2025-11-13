@@ -409,7 +409,7 @@ Run the published package through npx to verify it executes correctly:
 npx @vitalyostanin/mongodb-mcp@latest 2>&1 | head -5
 
 # Expected output (server should exit with configuration error):
-# MongoDB MCP server crashed Error: MongoDB configuration error: missing environment variables: MONGODB_CONNECTION_STRING
+# MongoDB MCP server crashed Error: MongoDB configuration error: missing environment variables: MONGODB_MCP_CONNECTION_STRING
 ```
 
 **Success criteria:**

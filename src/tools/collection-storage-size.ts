@@ -36,7 +36,7 @@ export function registerCollectionStorageSizeTool(server: McpServer, client: Mon
     },
     async (params: CollectionStorageSizeParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {

@@ -36,7 +36,7 @@ export function registerExplainTool(server: McpServer, client: MongoDBClient) {
     },
     async (params: ExplainParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {
@@ -95,7 +95,7 @@ export function registerExplainTool(server: McpServer, client: MongoDBClient) {
           }
 
           default:
-            throw new Error(`Unsupported method for explain: ${params.method.name}`);
+            return toolError(new Error(`Unsupported method for explain: ${params.method.name}`));
         }
 
         if (params.saveToFile) {

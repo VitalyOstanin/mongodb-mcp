@@ -57,45 +57,19 @@ describe('Connect Tool', () => {
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'connect',
       expect.objectContaining({
-        description: 'Establish connection to MongoDB using connection string',
+        description: expect.stringContaining('Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING'),
       }),
       expect.any(Function),
     );
   });
 
-  it('should connect to MongoDB with provided connection string', async () => {
-    mockConnectFn.mockResolvedValue(undefined);
-    mockGetConnectionInfoFn.mockReturnValue({ isConnected: false, hasConnectionString: false });
-
-    registerConnectTool(mockServer, mockClient);
-
-    // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we'm accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {
-      connectionString: 'mongodb://localhost:27017',
-    };
-    const result = await handler(params);
-
-    expect(mockConnectFn).toHaveBeenCalledWith('mongodb://localhost:27017');
-    expect(mockGetConnectionInfoFn).toHaveBeenCalled();
-
-    expect(result).toEqual(
-      toolSuccess({
-        success: true,
-        message: 'Connected to MongoDB successfully',
-        isConnected: true,
-      }),
-    );
-  });
+  // Note: This test is no longer relevant since we removed the connectionString parameter
+  // The connection string is only provided via environment variable now
 
   it('should connect to MongoDB using environment variable', async () => {
-    process.env.MONGODB_CONNECTION_STRING = 'mongodb://env:27017';
+    process.env.MONGODB_MCP_CONNECTION_STRING = 'mongodb://env:27017';
     mockConnectFn.mockResolvedValue(undefined);
-    mockGetConnectionInfoFn.mockReturnValue({ isConnected: false, hasConnectionString: false });
+    mockGetConnectionInfoFn.mockReturnValue({ isConnected: false }); // Updated to remove hasConnectionString
 
     registerConnectTool(mockServer, mockClient);
 
@@ -108,20 +82,21 @@ describe('Connect Tool', () => {
     const params = {}; // No connection string provided
     const result = await handler(params);
 
-    expect(mockConnectFn).toHaveBeenCalledWith(undefined); // The connect method will use the env var internally
+    expect(mockConnectFn).toHaveBeenCalledWith(); // The connect method will use the env var internally and default to readonly mode
     expect(mockGetConnectionInfoFn).toHaveBeenCalled();
 
     expect(result).toEqual(
       toolSuccess({
         success: true,
-        message: 'Connected to MongoDB successfully using MONGODB_CONNECTION_STRING environment variable',
+        message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
         isConnected: true,
       }),
     );
   });
 
   it('should return success when already connected to the same connection string', async () => {
-    mockClient.getConnectionInfo.mockReturnValue({ isConnected: true, hasConnectionString: true });
+    process.env.MONGODB_MCP_CONNECTION_STRING = 'mongodb://localhost:27017';
+    mockClient.getConnectionInfo.mockReturnValue({ isConnected: true }); // Updated to remove hasConnectionString
     mockClient.getConnectionString.mockReturnValue('mongodb://localhost:27017');
 
     registerConnectTool(mockServer, mockClient);
@@ -132,9 +107,7 @@ describe('Connect Tool', () => {
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {
-      connectionString: 'mongodb://localhost:27017',
-    };
+    const params = {}; // No connection string parameter anymore
     const result = await handler(params);
 
     expect(mockClient.getConnectionInfo).toHaveBeenCalled();
@@ -151,8 +124,8 @@ describe('Connect Tool', () => {
   });
 
   it('should return an error if no connection string is provided and environment variable is not set', async () => {
-    // Ensure MONGODB_CONNECTION_STRING is not set
-    delete process.env.MONGODB_CONNECTION_STRING;
+    // Ensure MONGODB_MCP_CONNECTION_STRING is not set
+    delete process.env.MONGODB_MCP_CONNECTION_STRING;
 
     registerConnectTool(mockServer, mockClient);
 
@@ -168,13 +141,14 @@ describe('Connect Tool', () => {
     expect(mockClient.connect).not.toHaveBeenCalled();
 
     expect(result).toEqual(
-      toolError(new Error('Connection string is required. Either pass it as a parameter or set MONGODB_CONNECTION_STRING environment variable.')),
+      toolError(new Error('Connection string is required. Please set MONGODB_MCP_CONNECTION_STRING environment variable.')),
     );
   });
 
   it('should return an error if connection fails', async () => {
+    process.env.MONGODB_MCP_CONNECTION_STRING = 'mongodb://localhost:27017';
     mockClient.connect.mockRejectedValue(new Error('Connection failed'));
-    mockClient.getConnectionInfo.mockReturnValue({ isConnected: false, hasConnectionString: false });
+    mockClient.getConnectionInfo.mockReturnValue({ isConnected: false }); // Updated to remove hasConnectionString
 
     registerConnectTool(mockServer, mockClient);
 
@@ -184,12 +158,10 @@ describe('Connect Tool', () => {
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {
-      connectionString: 'mongodb://localhost:27017',
-    };
+    const params = {}; // No connection string parameter anymore
     const result = await handler(params);
 
-    expect(mockClient.connect).toHaveBeenCalledWith('mongodb://localhost:27017');
+    expect(mockClient.connect).toHaveBeenCalledWith(); // Default to readonly mode
 
     expect(result).toEqual(
       toolError(new Error('Connection failed')),

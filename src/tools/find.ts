@@ -28,7 +28,7 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
     },
     async (params: FindParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {

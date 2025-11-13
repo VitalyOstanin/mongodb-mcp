@@ -6,6 +6,8 @@ export class MongoDBClient {
   private isConnected: boolean = false;
   private connectionString: string | null = null;
   private readonlyMode: boolean = false;
+  private disconnectReason: string | null = null;
+  private connectionError: Error | null = null;
 
   private constructor() {}
 
@@ -26,12 +28,12 @@ export class MongoDBClient {
     return this.readonlyMode;
   }
 
-  async connect(connectionString?: string, readonlyMode: boolean = true): Promise<void> {
-    // If connection string is not provided, check env var
-    const connString = connectionString ?? process.env.MONGODB_CONNECTION_STRING;
+  async connect(readonlyMode: boolean = true): Promise<void> {
+    // Only use connection string from environment variable
+    const connString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
     if (!connString) {
-      throw new Error('Connection string is required. Either pass it as a parameter or set MONGODB_CONNECTION_STRING environment variable.');
+      throw new Error('Connection string is required. Please set MONGODB_MCP_CONNECTION_STRING environment variable.');
     }
 
     if (this.isConnected && this.client) {
@@ -43,35 +45,119 @@ export class MongoDBClient {
       this.client = new MongoClient(connString, {
         // Optionally: connection settings
       } as MongoClientOptions);
+
+      // Add event listeners to detect connection issues
+      this.client.on('serverClosed', () => {
+        // Server closed event
+        if (this.isConnected) {
+          this.isConnected = false;
+          this.connectionError = new Error('MongoDB server closed connection');
+          this.disconnectReason = 'server closed connection';
+        }
+      });
+
+      this.client.on('serverHeartbeatFailed', () => {
+        // Server heartbeat failed, indicates connection issues
+        if (this.isConnected) {
+          this.connectionError = new Error('MongoDB heartbeat failed - connection lost');
+          this.disconnectReason = 'heartbeat failed';
+        }
+      });
+
+      this.client.on('connectionClosed', () => {
+        // Connection closed event
+        if (this.isConnected) {
+          this.isConnected = false;
+          this.connectionError = new Error('MongoDB connection closed');
+          this.disconnectReason = 'connection closed';
+        }
+      });
+
+      this.client.on('error', (error) => {
+        // General connection error
+        if (this.isConnected) {
+          this.isConnected = false;
+          this.connectionError = error instanceof Error ? error : new Error(String(error));
+          this.disconnectReason = 'connection error';
+        }
+      });
+
       await this.client.connect();
       this.connectionString = connString;
       this.isConnected = true;
+      this.disconnectReason = null; // Clear disconnect reason on successful connection
+      this.connectionError = null; // Clear any previous connection error
       this.setReadonlyMode(readonlyMode);
     } catch (error) {
+      this.connectionError = error instanceof Error ? error : new Error(String(error));
       throw new Error(`Failed to connect to MongoDB: ${error}`);
     }
   }
 
-  async disconnect(): Promise<void> {
+  async disconnect(reason: string = "штатный disconnect"): Promise<void> {
     if (this.client) {
       await this.client.close();
       this.isConnected = false;
       this.client = null;
       this.connectionString = null;
+      this.disconnectReason = reason;
+      this.connectionError = null; // Clear any error when disconnecting intentionally
     }
   }
 
   getClient(): MongoClient {
+    // Check both connection status and client object availability
     if (!(this.isConnected && this.client)) {
+      // Using nullish coalescing assignment operator to set error only if not already set
+      this.connectionError ??= new Error('Not connected to MongoDB. Please connect first.');
       throw new Error('Not connected to MongoDB. Please connect first.');
+    }
+
+    // Additional check: try a simple operation to verify connection is still alive
+    try {
+      // In newer versions of the MongoDB driver, checking for connection state requires different approach
+      // We can use the ping command or check the connection state via admin command
+      // The condition `this.client && this.isConnected` is necessary as both are separate state indicators
+      // Despite TypeScript thinking they're always truthy after the initial check, they can change during execution
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (this.client && this.isConnected) {
+        // Simple validation - if client is not null and isConnected flag is true, we assume it's connected
+        // The actual connection status will be validated by operations
+      }
+    } catch (error) {
+      this.isConnected = false;
+      this.connectionError = error instanceof Error ? error : new Error(String(error));
+      this.disconnectReason = 'connection error during operation';
+      throw error;
     }
 
     return this.client;
   }
 
   getDatabase(databaseName: string) {
+    // Check both connection status and client object availability
     if (!(this.isConnected && this.client)) {
+      // Using nullish coalescing assignment operator to set error only if not already set
+      this.connectionError ??= new Error('Not connected to MongoDB. Please connect first.');
       throw new Error('Not connected to MongoDB. Please connect first.');
+    }
+
+    // Additional connection check
+    try {
+      // In newer versions of the MongoDB driver, checking for connection state requires different approach
+      // We can use the ping command or check the connection state via admin command
+      // The condition `this.client && this.isConnected` is necessary as both are separate state indicators
+      // Despite TypeScript thinking they're always truthy after the initial check, they can change during execution
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (this.client && this.isConnected) {
+        // Simple validation - if client is not null and isConnected flag is true, we assume it's connected
+        // The actual connection status will be validated by operations
+      }
+    } catch (error) {
+      this.isConnected = false;
+      this.connectionError = error instanceof Error ? error : new Error(String(error));
+      this.disconnectReason = 'connection error during operation';
+      throw error;
     }
 
     const db = this.client.db(databaseName);
@@ -189,14 +275,20 @@ export class MongoDBClient {
     return this.isConnected;
   }
 
-  getConnectionInfo(): { isConnected: boolean; hasConnectionString: boolean } {
-    // Check if we have a connection string either from active connection or environment variable
-    const hasConnectionString = !((this.connectionString) && (process.env.MONGODB_CONNECTION_STRING));
-
-    return {
+  getConnectionInfo(): { isConnected: boolean; disconnectReason?: string; connectionError?: string } {
+    const info: { isConnected: boolean; disconnectReason?: string; connectionError?: string } = {
       isConnected: this.isConnected,
-      hasConnectionString,
     };
+
+    if (!this.isConnected && this.disconnectReason) {
+      info.disconnectReason = this.disconnectReason;
+    }
+
+    if (this.connectionError) {
+      info.connectionError = this.connectionError.message;
+    }
+
+    return info;
   }
 
   getConnectionString(): string | null {

@@ -7,18 +7,18 @@ export interface MongoDBConfig {
 }
 
 const configSchema = z.object({
-  MONGODB_CONNECTION_STRING: z.string().min(1).optional(),
-  MONGODB_DEFAULT_DATABASE: z.string().optional(),
-  MONGODB_TIMEZONE: z.string().optional(),
+  MONGODB_MCP_CONNECTION_STRING: z.string().min(1),
+  MONGODB_MCP_DEFAULT_DATABASE: z.string().optional(),
+  MONGODB_MCP_TIMEZONE: z.string().optional(),
 });
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig {
   // Make a copy of the environment and set missing optional values to undefined
   // to satisfy the schema
   const envToParse = {
-    MONGODB_CONNECTION_STRING: env.MONGODB_CONNECTION_STRING,
-    MONGODB_DEFAULT_DATABASE: env.MONGODB_DEFAULT_DATABASE,
-    MONGODB_TIMEZONE: env.MONGODB_TIMEZONE,
+    MONGODB_MCP_CONNECTION_STRING: env.MONGODB_MCP_CONNECTION_STRING,
+    MONGODB_MCP_DEFAULT_DATABASE: env.MONGODB_MCP_DEFAULT_DATABASE,
+    MONGODB_MCP_TIMEZONE: env.MONGODB_MCP_TIMEZONE,
   };
   const parsed = configSchema.safeParse(envToParse);
 
@@ -35,15 +35,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig 
   }
 
   return {
-    connectionString: parsed.data.MONGODB_CONNECTION_STRING,
-    defaultDatabase: parsed.data.MONGODB_DEFAULT_DATABASE,
-    timezone: parsed.data.MONGODB_TIMEZONE ?? "Europe/Moscow",
+    connectionString: parsed.data.MONGODB_MCP_CONNECTION_STRING,
+    defaultDatabase: parsed.data.MONGODB_MCP_DEFAULT_DATABASE,
+    timezone: parsed.data.MONGODB_MCP_TIMEZONE ?? "Europe/Moscow",
   };
 }
 
 export function enrichConfigWithRedaction(config: MongoDBConfig) {
   return {
-    hasConnectionString: config.connectionString ? config.connectionString.length > 0 : false,
     defaultDatabase: config.defaultDatabase,
     timezone: config.timezone,
   };

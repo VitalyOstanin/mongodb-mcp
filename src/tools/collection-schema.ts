@@ -154,7 +154,7 @@ export function registerCollectionSchemaTool(server: McpServer, client: MongoDBC
     },
     async (params: CollectionSchemaParams) => {
       if (!client.isConnectedToMongoDB()) {
-        throw new Error('Not connected to MongoDB. Please connect first.');
+        return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {

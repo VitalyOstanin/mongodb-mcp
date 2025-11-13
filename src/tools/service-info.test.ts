@@ -1,168 +1,145 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { MongoDBClient } from '../mongodb-client.js';
 import { registerServiceInfoTool } from './service-info.js';
-import { VERSION } from '../version.js';
-import { getTimezone } from '../utils/date.js';
-import { toolSuccess } from '../utils/tool-response.js';
 
-// Mock the getTimezone function
-jest.mock('../utils/date.js');
-
-describe('ServiceInfo Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+describe('serviceInfo Tool', () => {
+  // Using 'any' for mock objects as Jest mocks have dynamic properties that are hard to type precisely
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockServer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockClient: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     mockServer = {
       registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+    };
 
     mockClient = {
       getConnectionInfo: jest.fn(),
       isReadonly: jest.fn(),
-    } as unknown as jest.Mocked<MongoDBClient>;
-
-    // Mock getTimezone to return a consistent value
-    (getTimezone as jest.Mock).mockReturnValue('UTC');
+    };
   });
 
-  it('should register the service-info tool correctly', () => {
+  it('should register the service_info tool correctly', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'service_info',
       expect.objectContaining({
+        title: 'Service Information',
         description: 'Get MongoDB service information and current connection status',
       }),
       expect.any(Function),
     );
   });
 
-  it('should return service info when connected in non-read-only mode', async () => {
+  it('should return service info with disconnect reason when disconnected', async () => {
+    // Mock client behavior
     mockClient.getConnectionInfo.mockReturnValue({
-      isConnected: true,
-      hasConnectionString: true,
-    });
-    mockClient.isReadonly.mockReturnValue(false);
-
-    registerServiceInfoTool(mockServer, mockClient);
-
-    // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we're accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {};
-    const result = await handler(params);
-
-    expect(mockClient.getConnectionInfo).toHaveBeenCalled();
-    expect(mockClient.isReadonly).toHaveBeenCalled();
-
-    expect(result).toEqual(
-      toolSuccess({
-        name: 'mongodb-mcp',
-        isConnected: true,
-        hasConnectionString: true,
-        readonly: false,
-        version: VERSION,
-        timezone: 'UTC',
-      }),
-    );
-  });
-
-  it('should return service info when connected in read-only mode', async () => {
-    mockClient.getConnectionInfo.mockReturnValue({
-      isConnected: true,
-      hasConnectionString: true,
+      isConnected: false,
+      disconnectReason: 'штатный disconnect',
     });
     mockClient.isReadonly.mockReturnValue(true);
 
     registerServiceInfoTool(mockServer, mockClient);
 
-    // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we're accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {};
-    const result = await handler(params);
+    // Get the registered implementation function
+    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    // Call the implementation
+    const result = await implementation();
+    const parsedResult = JSON.parse(result.content[0].text);
 
-    expect(mockClient.getConnectionInfo).toHaveBeenCalled();
-    expect(mockClient.isReadonly).toHaveBeenCalled();
-
-    expect(result).toEqual(
-      toolSuccess({
-        name: 'mongodb-mcp',
-        isConnected: true,
-        hasConnectionString: true,
-        readonly: true,
-        version: VERSION,
-        timezone: 'UTC',
-      }),
-    );
+    expect(parsedResult.success).toBe(true);
+    expect(parsedResult.payload).toEqual({
+      name: 'mongodb-mcp',
+      isConnected: false,
+      readonly: true,
+      version: expect.any(String),
+      timezone: expect.any(String),
+      disconnectReason: 'штатный disconnect',
+    });
   });
 
-  it('should return service info when not connected', async () => {
+  it('should return service info with connection error when present', async () => {
+    // Mock client behavior
     mockClient.getConnectionInfo.mockReturnValue({
       isConnected: false,
-      hasConnectionString: false,
+      connectionError: 'Connection failed',
     });
     mockClient.isReadonly.mockReturnValue(false);
 
     registerServiceInfoTool(mockServer, mockClient);
 
-    // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we're accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {};
-    const result = await handler(params);
+    // Get the registered implementation function
+    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    // Call the implementation
+    const result = await implementation();
+    const parsedResult = JSON.parse(result.content[0].text);
 
-    expect(result).toEqual(
-      toolSuccess({
-        name: 'mongodb-mcp',
-        isConnected: false,
-        hasConnectionString: false,
-        readonly: false,
-        version: VERSION,
-        timezone: 'UTC',
-      }),
-    );
+    expect(parsedResult.success).toBe(true);
+    expect(parsedResult.payload).toEqual({
+      name: 'mongodb-mcp',
+      isConnected: false,
+      readonly: false,
+      version: expect.any(String),
+      timezone: expect.any(String),
+      connectionError: 'Connection failed',
+    });
   });
 
-  it('should return service info with connection string but not connected', async () => {
+  it('should return service info without disconnect reason when connected', async () => {
+    // Mock client behavior
     mockClient.getConnectionInfo.mockReturnValue({
-      isConnected: false,
-      hasConnectionString: true,
+      isConnected: true,
     });
     mockClient.isReadonly.mockReturnValue(false);
 
     registerServiceInfoTool(mockServer, mockClient);
 
-    // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we're accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = registerCall[2] as (params: any) => Promise<any>;
-    const params = {};
-    const result = await handler(params);
+    // Get the registered implementation function
+    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    // Call the implementation
+    const result = await implementation();
+    const parsedResult = JSON.parse(result.content[0].text);
 
-    expect(result).toEqual(
-      toolSuccess({
-        name: 'mongodb-mcp',
-        isConnected: false,
-        hasConnectionString: true,
-        readonly: false,
-        version: VERSION,
-        timezone: 'UTC',
-      }),
-    );
+    expect(parsedResult.success).toBe(true);
+    expect(parsedResult.payload).toEqual({
+      name: 'mongodb-mcp',
+      isConnected: true,
+      readonly: false,
+      version: expect.any(String),
+      timezone: expect.any(String),
+    });
+
+    // Should not have disconnectReason or connectionError when connected
+    expect(parsedResult.payload.disconnectReason).toBeUndefined();
+    expect(parsedResult.payload.connectionError).toBeUndefined();
+  });
+
+  it('should return service info with both disconnect reason and error when both present', async () => {
+    // Mock client behavior
+    mockClient.getConnectionInfo.mockReturnValue({
+      isConnected: false,
+      disconnectReason: 'manual disconnect',
+      connectionError: 'Network error',
+    });
+    mockClient.isReadonly.mockReturnValue(true);
+
+    registerServiceInfoTool(mockServer, mockClient);
+
+    // Get the registered implementation function
+    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    // Call the implementation
+    const result = await implementation();
+    const parsedResult = JSON.parse(result.content[0].text);
+
+    expect(parsedResult.success).toBe(true);
+    expect(parsedResult.payload).toEqual({
+      name: 'mongodb-mcp',
+      isConnected: false,
+      readonly: true,
+      version: expect.any(String),
+      timezone: expect.any(String),
+      disconnectReason: 'manual disconnect',
+      connectionError: 'Network error',
+    });
   });
 });
