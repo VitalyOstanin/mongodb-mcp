@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { generateTempFilePath } from '../utils/streaming.js';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
 
 const collectionSchemaSchema = z.object({
@@ -190,10 +190,10 @@ export function registerCollectionSchemaTool(server: McpServer, client: MongoDBC
           // Ensure directory exists
           const dir = dirname(filePath);
 
-          mkdirSync(dir, { recursive: true });
+          await mkdir(dir, { recursive: true });
 
           // Write response to file
-          writeFileSync(filePath, JSON.stringify(response, null, 2), 'utf8');
+          await writeFile(filePath, JSON.stringify(response, null, 2), 'utf8');
 
           return toolSuccess({
             savedToFile: true,

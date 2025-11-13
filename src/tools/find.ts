@@ -2,6 +2,10 @@ import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
+import { mkdir } from 'fs/promises';
+import { dirname } from 'path';
+import { generateTempFilePath } from '../utils/streaming.js';
+import { streamMongoCursorToFile, streamMongoCursorToFileAsArray } from '../utils/mongodb-stream.js';
 
 const findSchema = z.object({
   database: z.string().describe('Database name'),
@@ -12,6 +16,7 @@ const findSchema = z.object({
   sort: z.record(z.unknown()).optional().describe('A document, describing the sort order, matching the syntax of the sort argument of cursor.sort()'),
   saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
   filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
+  format: z.enum(['jsonl', 'json']).optional().default('jsonl').describe('Output format when saving to file: jsonl (JSON Lines) or json (JSON array format)'),
 });
 
 export type FindParams = z.infer<typeof findSchema>;
@@ -36,13 +41,57 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
         const collection = db.collection(params.collection);
 
         if (params.saveToFile) {
-          return toolError({
-            error: 'File saving functionality has been removed from this version',
-            code: 'NOT_IMPLEMENTED',
+          // For saving to file, create the query with filters, projection and sort
+          let query = collection.find(params.filter);
+
+          // Check if limit is specified; Zod schema defines it as optional
+          // even though it has a default, the TypeScript type still allows undefined
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (params.limit != null) {
+            query = query.limit(params.limit);
+          }
+
+          // Apply projection if specified
+          if (params.projection) {
+            query = query.project(params.projection);
+          }
+
+          // Apply sort if specified
+          if (params.sort) {
+            // MongoDB sort parameter can have dynamic structure
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            query = query.sort(params.sort as any);
+          }
+
+          // Stream the results directly to file without accumulating in memory
+          const filePath = params.filePath ?? generateTempFilePath();
+          // Ensure directory exists
+          const dir = dirname(filePath);
+
+          await mkdir(dir, { recursive: true });
+
+          // Choose streaming function based on format parameter
+          if (params.format === 'json') {
+            await streamMongoCursorToFileAsArray(query, filePath);
+          } else {
+            // Default to jsonl format
+            await streamMongoCursorToFile(query, filePath);
+          }
+
+          return toolSuccess({
+            savedToFile: true,
+            filePath,
+            database: params.database,
+            collection: params.collection,
+            // Using nullish coalescing operator in case params.format is null or undefined
+            // even though the Zod schema defines it as optional with default, the TypeScript
+            // type still allows undefined, so the operator is necessary
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            format: params.format ?? 'jsonl',
+            message: 'Documents exported successfully',
           });
         } else {
           // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
-          // Add a default limit to prevent memory issues if no limit is specified
           let query = collection.find(params.filter);
           // Apply limit, using the zod default and capping at 1000 to prevent memory issues
           const { limit = 10 } = params;

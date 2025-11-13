@@ -94,7 +94,7 @@ export class MongoDBClient {
     }
   }
 
-  async disconnect(reason: string = "штатный disconnect"): Promise<void> {
+  async disconnect(reason: string = "normal disconnect"): Promise<void> {
     if (this.client) {
       await this.client.close();
       this.isConnected = false;

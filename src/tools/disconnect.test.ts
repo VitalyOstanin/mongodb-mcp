@@ -50,13 +50,13 @@ describe('disconnectTool', () => {
     const parsedResult = JSON.parse(result.content[0].text);
 
     // Assert
-    expect(mockClient.disconnect).toHaveBeenCalledWith('штатный disconnect');
+    expect(mockClient.disconnect).toHaveBeenCalledWith('normal disconnect');
     expect(parsedResult.success).toBe(true);
     expect(parsedResult.payload).toEqual({
       success: true,
       message: 'Disconnected from MongoDB successfully',
       isConnected: false,
-      disconnectReason: 'штатный disconnect',
+      disconnectReason: 'normal disconnect',
     });
   });
 

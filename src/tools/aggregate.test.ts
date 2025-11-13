@@ -3,6 +3,7 @@ import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerAggregateTool } from './aggregate.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
+import { readFile } from 'fs/promises';
 
 // Mock objects for testing
 const mockCollection: jest.Mocked<Collection> = {
@@ -260,8 +261,25 @@ describe('Aggregate Tool', () => {
     );
   });
 
-  it('should return an error if saveToFile is true', async () => {
+  it('should stream aggregation results to a file if saveToFile is true', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
+
+    const mockAggregateResult = {
+      // Mock the async iterator for the aggregation cursor
+      [Symbol.asyncIterator]: jest.fn().mockImplementation(function*() {
+        yield { _id: 1, name: 'test1' };
+        yield { _id: 2, name: 'test2' };
+      }),
+    };
+    const mockCollection = {
+      find: jest.fn(),
+      aggregate: jest.fn().mockReturnValue(mockAggregateResult),
+      countDocuments: jest.fn(),
+    };
+
+    // Using 'any' for mocking database object because the exact type is complex to define
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
 
     registerAggregateTool(mockServer, mockClient);
 
@@ -276,15 +294,38 @@ describe('Aggregate Tool', () => {
       collection: 'testcollection',
       pipeline: [{ $match: { status: 'active' } }],
       saveToFile: true,
+      format: 'jsonl',
     };
     const result = await handler(params);
 
-    expect(result).toEqual(
-      toolError({
-        error: 'File saving functionality has been removed from this version',
-        code: 'NOT_IMPLEMENTED',
-      }),
-    );
+    // Verify that the database and collection methods were called
+    expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }]);
+
+    // Result should indicate successful file save
+    expect(result.isError).toBeUndefined(); // Not an error
+
+    const resultObj = JSON.parse(result.content[0].text);
+
+    expect(resultObj.success).toBe(true);
+    expect(resultObj.payload.savedToFile).toBe(true);
+    expect(resultObj.payload.filePath).toBeDefined();
+
+    // Verify the content of the generated file
+    const generatedFilePath = resultObj.payload.filePath;
+    const fileContent = await readFile(generatedFilePath, 'utf8');
+    // Split the content by lines since it's in JSONL format
+    const lines = fileContent.trim().split('\n');
+
+    // Should have 2 lines for our test data
+    expect(lines).toHaveLength(2);
+
+    // Verify each line is valid JSON and matches expected content
+    const firstLine = JSON.parse(lines[0]);
+    const secondLine = JSON.parse(lines[1]);
+
+    expect(firstLine).toEqual({ _id: 1, name: 'test1' });
+    expect(secondLine).toEqual({ _id: 2, name: 'test2' });
   });
 
   it('should limit results to 1000 documents', async () => {

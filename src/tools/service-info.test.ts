@@ -35,7 +35,7 @@ describe('serviceInfo Tool', () => {
     // Mock client behavior
     mockClient.getConnectionInfo.mockReturnValue({
       isConnected: false,
-      disconnectReason: 'штатный disconnect',
+      disconnectReason: 'normal disconnect',
     });
     mockClient.isReadonly.mockReturnValue(true);
 

@@ -226,8 +226,24 @@ describe('Find Tool', () => {
     expect(resultObj.payload.limit).toBe(1000);
   });
 
-  it('should return an error if saveToFile is true', async () => {
+  it('should stream results to a file if saveToFile is true', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
+
+    // Mock the cursor with async iterator
+    const mockCursor = {
+      [Symbol.asyncIterator]: jest.fn().mockImplementation(async function*() {
+        yield { _id: 1, name: 'test' };
+      }),
+    };
+    const mockCollection = {
+      find: jest.fn().mockReturnValue(mockCursor),
+      aggregate: jest.fn(),
+      countDocuments: jest.fn(),
+    };
+
+    // Using 'any' for mocking database object because the exact type is complex to define
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
 
     registerFindTool(mockServer, mockClient);
 
@@ -242,15 +258,23 @@ describe('Find Tool', () => {
       collection: 'testcollection',
       filter: { status: 'active' },
       saveToFile: true,
+      filePath: '/tmp/test.json',
+      format: 'jsonl',
     };
     const result = await handler(params);
 
-    expect(result).toEqual(
-      toolError({
-        error: 'File saving functionality has been removed from this version',
-        code: 'NOT_IMPLEMENTED',
-      }),
-    );
+    // Verify that the database and collection methods were called
+    expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
+    expect(mockCollection.find).toHaveBeenCalledWith({ status: 'active' });
+
+    // Result should indicate successful file save
+    expect(result.isError).toBeUndefined(); // Not an error
+
+    const resultObj = JSON.parse(result.content[0].text);
+
+    expect(resultObj.success).toBe(true);
+    expect(resultObj.payload.savedToFile).toBe(true);
+    expect(resultObj.payload.filePath).toBeDefined();
   });
 
   it('should return an error if finding fails', async () => {

@@ -60,7 +60,7 @@ export function registerCountTool(server: McpServer, client: MongoDBClient) {
           query,
           count,
         };
-        const processedResult = processWithFileStorage(result, params.saveToFile, params.filePath);
+        const processedResult = await processWithFileStorage(result, params.saveToFile, params.filePath);
         const { savedToFile, filePath, data } = processedResult;
 
         if (savedToFile) {

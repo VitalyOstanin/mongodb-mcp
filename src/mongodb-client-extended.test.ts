@@ -96,7 +96,7 @@ describe('MongoDBClient Extended', () => {
       const info = client.getConnectionInfo();
 
       expect(info.isConnected).toBe(false);
-      expect(info.disconnectReason).toBe('штатный disconnect');
+      expect(info.disconnectReason).toBe('normal disconnect');
     });
   });
 

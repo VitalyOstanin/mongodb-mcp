@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import { generateTempFilePath } from '../utils/streaming.js';
 
@@ -103,10 +103,10 @@ export function registerExplainTool(server: McpServer, client: MongoDBClient) {
           // Ensure directory exists
           const dir = dirname(filePath);
 
-          mkdirSync(dir, { recursive: true });
+          await mkdir(dir, { recursive: true });
 
           // Write response to file
-          writeFileSync(filePath, JSON.stringify(explainResult, null, 2), 'utf8');
+          await writeFile(filePath, JSON.stringify(explainResult, null, 2), 'utf8');
 
           return toolSuccess({
             savedToFile: true,

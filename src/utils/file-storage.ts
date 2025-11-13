@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFile, mkdir, access } from "fs/promises";
 import { join, dirname } from "path";
 
 export interface FileStorageOptions {
@@ -10,7 +10,7 @@ export interface FileStorageOptions {
 /**
  * Saves data to a JSON file and returns the file path
  */
-export function saveDataToFile(options: FileStorageOptions): string {
+export async function saveDataToFile(options: FileStorageOptions): Promise<string> {
   const { data, filePath, baseDir = "data" } = options;
   let finalPath: string;
 
@@ -29,17 +29,23 @@ export function saveDataToFile(options: FileStorageOptions): string {
   // Ensure directory exists
   const dir = dirname(finalPath);
 
-  mkdirSync(dir, { recursive: true });
+  await mkdir(dir, { recursive: true });
 
   // Check if file already exists
-  if (existsSync(finalPath)) {
+  try {
+    await access(finalPath);
     throw new Error(`File already exists: ${finalPath}. Choose a different file path or remove the existing file.`);
+  } catch (error) {
+    // File doesn't exist, which is what we want
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
   }
 
   // Write data to file
   const jsonData = JSON.stringify(data, null, 2);
 
-  writeFileSync(finalPath, jsonData, "utf-8");
+  await writeFile(finalPath, jsonData, "utf-8");
 
   return finalPath;
 }
@@ -72,14 +78,14 @@ export interface FileStorageResult<T> {
 /**
  * Processes tool result with optional file storage
  */
-export function processWithFileStorage<T>(
+export async function processWithFileStorage<T>(
   data: T,
   saveToFile?: boolean,
   filePath?: string,
-): FileStorageResult<T> {
+): Promise<FileStorageResult<T>> {
 
   if (saveToFile) {
-    const savedPath = saveDataToFile({
+    const savedPath = await saveDataToFile({
       data,
       filePath,
     });

@@ -38,13 +38,13 @@ export function registerDisconnectTool(server: McpServer, client: MongoDBClient)
         }
 
         // Disconnect with a reason
-        await client.disconnect('штатный disconnect');
+        await client.disconnect('normal disconnect');
 
         const response = {
           success: true,
           message: 'Disconnected from MongoDB successfully',
           isConnected: false,
-          disconnectReason: 'штатный disconnect',
+          disconnectReason: 'normal disconnect',
         };
 
         return toolSuccess(response);
