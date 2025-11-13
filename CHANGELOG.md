@@ -10,11 +10,10 @@
 - Collection management (list collections, schema analysis, index inspection)
 - Document operations (find, count, aggregate)
 - Query and aggregation tools with full MongoDB syntax support
-- Connection management and authentication support
+- Connection management with disconnect tool support
 - Monitoring tools for database health and performance metrics
-- Import/export capabilities for large datasets
-- Basic authentication and connection pooling
-- Configuration via environment variables (MONGODB_MCP_CONNECTION_STRING)
+- MongoDB streaming utility for large dataset handling
+- Enhanced documentation and configuration handling
 - TypeScript implementation with proper type safety
 - MCP tool registration and server infrastructure
 
