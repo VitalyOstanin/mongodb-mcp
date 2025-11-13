@@ -81,6 +81,12 @@ describe('Aggregate Tool', () => {
         yield { _id: 1, name: 'Test' };
         yield { _id: 2, name: 'Another Test' };
       },
+      async toArray() {
+        return [
+          { _id: 1, name: 'Test' },
+          { _id: 2, name: 'Another Test' },
+        ];
+      },
     };
 
     // Using 'any' because the mock cursor implementation has a complex type structure
@@ -103,7 +109,7 @@ describe('Aggregate Tool', () => {
 
     expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
     expect(mockDb.collection).toHaveBeenCalledWith('testcollection');
-    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }]);
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }, { $limit: 1000 }]);
 
     expect(result).toEqual(
       toolSuccess({
@@ -129,6 +135,12 @@ describe('Aggregate Tool', () => {
         yield { _id: 1, name: 'Test' };
         yield { _id: 2, name: 'Another Test' };
       },
+      async toArray() {
+        return [
+          { _id: 1, name: 'Test' },
+          { _id: 2, name: 'Another Test' },
+        ];
+      },
     };
 
     // Using 'any' because the mock cursor implementation has a complex type structure
@@ -149,7 +161,7 @@ describe('Aggregate Tool', () => {
     };
     const result = await handler(params);
 
-    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }, { $project: { name: 1 } }]);
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }, { $project: { name: 1 } }, { $limit: 1000 }]);
 
     expect(result).toEqual(
       toolSuccess({
@@ -198,6 +210,11 @@ describe('Aggregate Tool', () => {
       async *[Symbol.asyncIterator] () {
         yield { _id: 1, name: 'Test' };
       },
+      async toArray() {
+        return [
+          { _id: 1, name: 'Test' },
+        ];
+      },
     };
 
     // Using 'any' because the mock cursor implementation has a complex type structure
@@ -220,7 +237,7 @@ describe('Aggregate Tool', () => {
     };
     const result = await handler(params);
 
-    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }, { $out: 'output_collection' }]);
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }, { $out: 'output_collection' }, { $limit: 1000 }]);
 
     expect(result).toEqual(
       toolSuccess({
@@ -337,6 +354,16 @@ describe('Aggregate Tool', () => {
         for (let i = 0; i < 1005; i++) {
           yield { _id: i, name: `Test${i}` };
         }
+      },
+      async toArray() {
+        // With $limit: 1000, should only return first 1000 documents
+        const results = [];
+
+        for (let i = 0; i < 1000; i++) {
+          results.push({ _id: i, name: `Test${i}` });
+        }
+
+        return results;
       },
     };
 

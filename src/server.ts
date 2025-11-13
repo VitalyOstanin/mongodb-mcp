@@ -73,6 +73,9 @@ export class MongoDBServer {
         // Connect in readonly mode if it's enabled
         this.mongoClient.connect(readonlyMode).catch(error => {
           console.error("Failed to auto-connect to MongoDB:", error);
+          // Set connection error state or emit event for proper error handling
+          // Consider retrying connection or notifying the user
+          process.exitCode = 1;
         });
       }
     }

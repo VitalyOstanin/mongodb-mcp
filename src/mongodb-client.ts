@@ -1,4 +1,4 @@
-import { MongoClient, type MongoClientOptions, type Db, type Collection } from 'mongodb';
+import { MongoClient, type MongoClientOptions, type Db, type Collection, type Document } from 'mongodb';
 
 export class MongoDBClient {
   private static instance: MongoDBClient;
@@ -105,62 +105,23 @@ export class MongoDBClient {
     }
   }
 
-  getClient(): MongoClient {
-    // Check both connection status and client object availability
+  private ensureConnected(): void {
     if (!(this.isConnected && this.client)) {
-      // Using nullish coalescing assignment operator to set error only if not already set
       this.connectionError ??= new Error('Not connected to MongoDB. Please connect first.');
-      throw new Error('Not connected to MongoDB. Please connect first.');
+      throw this.connectionError;
     }
+  }
 
-    // Additional check: try a simple operation to verify connection is still alive
-    try {
-      // In newer versions of the MongoDB driver, checking for connection state requires different approach
-      // We can use the ping command or check the connection state via admin command
-      // The condition `this.client && this.isConnected` is necessary as both are separate state indicators
-      // Despite TypeScript thinking they're always truthy after the initial check, they can change during execution
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (this.client && this.isConnected) {
-        // Simple validation - if client is not null and isConnected flag is true, we assume it's connected
-        // The actual connection status will be validated by operations
-      }
-    } catch (error) {
-      this.isConnected = false;
-      this.connectionError = error instanceof Error ? error : new Error(String(error));
-      this.disconnectReason = 'connection error during operation';
-      throw error;
-    }
+  getClient(): MongoClient {
+    this.ensureConnected();
 
-    return this.client;
+    return this.client!;
   }
 
   getDatabase(databaseName: string) {
-    // Check both connection status and client object availability
-    if (!(this.isConnected && this.client)) {
-      // Using nullish coalescing assignment operator to set error only if not already set
-      this.connectionError ??= new Error('Not connected to MongoDB. Please connect first.');
-      throw new Error('Not connected to MongoDB. Please connect first.');
-    }
+    this.ensureConnected();
 
-    // Additional connection check
-    try {
-      // In newer versions of the MongoDB driver, checking for connection state requires different approach
-      // We can use the ping command or check the connection state via admin command
-      // The condition `this.client && this.isConnected` is necessary as both are separate state indicators
-      // Despite TypeScript thinking they're always truthy after the initial check, they can change during execution
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (this.client && this.isConnected) {
-        // Simple validation - if client is not null and isConnected flag is true, we assume it's connected
-        // The actual connection status will be validated by operations
-      }
-    } catch (error) {
-      this.isConnected = false;
-      this.connectionError = error instanceof Error ? error : new Error(String(error));
-      this.disconnectReason = 'connection error during operation';
-      throw error;
-    }
-
-    const db = this.client.db(databaseName);
+    const db = this.client!.db(databaseName);
 
     // If in readonly mode, wrap the database with checks
     if (this.readonlyMode) {
@@ -189,9 +150,9 @@ export class MongoDBClient {
           };
         }
 
-        // MongoDB Db object has dynamic properties and no index signature, so using 'any' is necessary for property access
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (target as any)[prop];
+        // Use proper typing with Record for dynamic property access
+        // Converting to 'unknown' first to satisfy TypeScript constraints
+        const result = (target as unknown as Record<string, unknown>)[prop];
 
         // If result is a function, return it
         if (typeof result === 'function') {
@@ -231,16 +192,13 @@ export class MongoDBClient {
     });
   }
 
-  // Using 'any' for collection type as it needs to work with MongoDB Collection that can contain any document type
-  // This is necessary for the proxy to work with any kind of collection without restricting document structure
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private createReadonlyCollectionProxy(collection: Collection<any>) {
+  private createReadonlyCollectionProxy<T extends Document = Document>(collection: Collection<T>) {
     // Create a proxy for collection that protects aggregation operations
     return new Proxy(collection, {
       get(target, prop: string) {
-        // MongoDB Collection object has dynamic properties and no index signature
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (target as any)[prop];
+        // Use proper typing with Record for dynamic property access
+        // Converting to 'unknown' first to satisfy TypeScript constraints
+        const result = (target as unknown as Record<string, unknown>)[prop];
 
         if (typeof result === 'function') {
           if (prop === 'aggregate') {

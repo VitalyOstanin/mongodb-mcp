@@ -32,35 +32,37 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
       inputSchema: findSchema.shape,
     },
     async (params: FindParams) => {
+      const { database, collection: collectionName, filter, limit = 10, projection, sort, saveToFile } = params;
+
       if (!client.isConnectedToMongoDB()) {
         return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
       try {
-        const db = client.getDatabase(params.database);
-        const collection = db.collection(params.collection);
+        const db = client.getDatabase(database);
+        const collection = db.collection(collectionName);
 
-        if (params.saveToFile) {
+        if (saveToFile) {
           // For saving to file, create the query with filters, projection and sort
-          let query = collection.find(params.filter);
+          let query = collection.find(filter);
 
           // Check if limit is specified; Zod schema defines it as optional
           // even though it has a default, the TypeScript type still allows undefined
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          if (params.limit != null) {
-            query = query.limit(params.limit);
+          if (limit != null) {
+            query = query.limit(limit);
           }
 
           // Apply projection if specified
-          if (params.projection) {
-            query = query.project(params.projection);
+          if (projection) {
+            query = query.project(projection);
           }
 
           // Apply sort if specified
-          if (params.sort) {
+          if (sort) {
             // MongoDB sort parameter can have dynamic structure
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            query = query.sort(params.sort as any);
+            query = query.sort(sort as any);
           }
 
           // Stream the results directly to file without accumulating in memory
@@ -81,8 +83,8 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
           return toolSuccess({
             savedToFile: true,
             filePath,
-            database: params.database,
-            collection: params.collection,
+            database,
+            collection: collectionName,
             // Using nullish coalescing operator in case params.format is null or undefined
             // even though the Zod schema defines it as optional with default, the TypeScript
             // type still allows undefined, so the operator is necessary
@@ -92,30 +94,29 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
           });
         } else {
           // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
-          let query = collection.find(params.filter);
+          let query = collection.find(filter);
           // Apply limit, using the zod default and capping at 1000 to prevent memory issues
-          const { limit = 10 } = params;
           const effectiveLimit = Math.min(limit, 1000); // Use the zod default and respect the maximum limit
 
           query = query.limit(effectiveLimit);
 
           // Apply projection if specified
-          if (params.projection) {
-            query = query.project(params.projection);
+          if (projection) {
+            query = query.project(projection);
           }
 
           // Apply sort if specified
-          if (params.sort) {
+          if (sort) {
             // MongoDB sort parameter can have dynamic structure
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            query = query.sort(params.sort as any);
+            query = query.sort(sort as any);
           }
 
           // Execute the query
           const documents = await query.toArray();
           const result = {
-            database: params.database,
-            collection: params.collection,
+            database,
+            collection: collectionName,
             documents,
             count: documents.length,
             limit: effectiveLimit,

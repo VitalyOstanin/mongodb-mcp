@@ -54,7 +54,7 @@ describe('serviceInfo Tool', () => {
       readonly: true,
       version: expect.any(String),
       timezone: expect.any(String),
-      disconnectReason: 'штатный disconnect',
+      disconnectReason: 'normal disconnect',
     });
   });
 

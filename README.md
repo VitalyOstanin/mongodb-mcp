@@ -26,13 +26,8 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 - [Configuration for Qwen Code](#configuration-for-qwen-code)
 - [Configuration for VS Code Cline](#configuration-for-vs-code-cline)
 - [MCP Tools](#mcp-tools)
-  - [Service](#service)
-  - [Database Operations](#database-operations)
-  - [Collection Operations](#collection-operations)
-  - [Document Operations](#document-operations)
-  - [Schema and Index Analysis](#schema-and-index-analysis)
-  - [Query and Aggregation](#query-and-aggregation)
-  - [Monitoring and Logs](#monitoring-and-logs)
+  - [Read-Only Mode Tools](#read-only-mode-tools)
+  - [Non-Read-Only Mode Tools](#non-read-only-mode-tools)
 - [Important Notes](#important-notes)
   - [Read-Only Mode](#read-only-mode)
   - [Destructive Operations](#destructive-operations)
@@ -45,8 +40,6 @@ MCP server for comprehensive MongoDB integration with the following capabilities
   - `MONGODB_MCP_DEFAULT_DATABASE` — optional default database name for operations
   - `MONGODB_MCP_TIMEZONE` — optional timezone for date operations (default: `Europe/Moscow`), must be a valid IANA timezone identifier (e.g., `Europe/London`, `America/New_York`, `Asia/Tokyo`)
 
-
-
 ## Configuration for Qwen Code
 
 To use this MCP server with [Qwen Code](https://qwenlm.github.io/qwen-code-docs/), add to `~/.qwen/settings.json`:
@@ -58,8 +51,7 @@ To use this MCP server with [Qwen Code](https://qwenlm.github.io/qwen-code-docs/
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017"
       }
     }
   }
@@ -84,8 +76,7 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
       "command": "npx",
       "args": ["-y", "@vitalyostanin/mongodb-mcp@latest"],
       "env": {
-        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017",
-        "MONGODB_MCP_DEFAULT_DATABASE": "myapp"
+        "MONGODB_MCP_CONNECTION_STRING": "mongodb://localhost:27017"
       }
     }
   }
@@ -128,7 +119,7 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 
 The server supports read-only mode which prevents destructive operations:
 
-- **Read-only protection**: When `--read-only` flag is used (default) or `MONGODB_READONLY` environment variable is set to 'true', write operations are blocked. Use `--read-only=false` to allow write operations.
+- **Read-only protection**: When `--read-only` flag is used (default), write operations are blocked. Use `--read-only=false` to allow write operations.
 - **Protected operations**: `update`, `delete`, `insert`, `$out`, and `$merge` operations are forbidden
 - **Connection safety**: Read-only mode ensures no accidental data modifications occur
 

@@ -79,7 +79,7 @@ describe('MongoDBClient Extended', () => {
       await client.disconnect();
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).disconnectReason).toBe('штатный disconnect');
+      expect((client as any).disconnectReason).toBe('normal disconnect');
     });
 
     it('should return correct connection info after disconnect', async () => {

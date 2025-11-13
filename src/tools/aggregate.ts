@@ -86,26 +86,17 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
         } else {
           // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
           // Execute the aggregation pipeline with a reasonable limit to prevent memory issues
-          const cursor = collection.aggregate(params.pipeline);
-          // Limit results to prevent memory issues if not saving to file
-          const documents = [];
-          let count = 0;
           const maxDocs = 1000; // Reasonable limit for in-memory operations
-
-          for await (const doc of cursor) {
-            if (count >= maxDocs) {
-              break;
-            }
-            documents.push(doc);
-            count++;
-          }
-
+          // Add $limit stage to the pipeline to limit results
+          const pipelineWithLimit = [...params.pipeline, { $limit: maxDocs }];
+          const cursor = collection.aggregate(pipelineWithLimit);
+          const documents = await cursor.toArray();
           const result = {
             database: params.database,
             collection: params.collection,
             results: documents,
             count: documents.length,
-            hasMoreResults: count >= maxDocs, // Indicate if there were more results that were limited
+            hasMoreResults: documents.length >= maxDocs, // Indicate if there were more results that were limited
           };
 
           return toolSuccess(result);

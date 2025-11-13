@@ -4,26 +4,45 @@ import type { MongoDBClient } from '../mongodb-client.js';
 import { registerFindTool } from './find.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-// Mock objects for testing
-const mockFindCursor: jest.Mocked<FindCursor> = {
-  limit: jest.fn().mockReturnThis(),
-  project: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(),
-  toArray: jest.fn(),
-} as unknown as jest.Mocked<FindCursor>;
-const mockCollection: jest.Mocked<Collection> = {
-  find: jest.fn().mockReturnValue(mockFindCursor),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+// Mock the streaming functions to avoid actual file operations
+jest.mock('../utils/mongodb-stream.js', () => ({
+  streamMongoCursorToFile: jest.fn().mockResolvedValue(undefined),
+  streamMongoCursorToFileAsArray: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Define base mock objects that can be reset for each test
+const createBaseMocks = () => {
+  const mockFindCursor: jest.Mocked<FindCursor> = {
+    limit: jest.fn().mockReturnThis(),
+    project: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
+    toArray: jest.fn(),
+  } as unknown as jest.Mocked<FindCursor>;
+  const mockCollection: jest.Mocked<Collection> = {
+    find: jest.fn().mockReturnValue(mockFindCursor),
+  } as unknown as jest.Mocked<Collection>;
+  const mockDb: jest.Mocked<Db> = {
+    collection: jest.fn().mockReturnValue(mockCollection),
+  } as unknown as jest.Mocked<Db>;
+
+  return { mockFindCursor, mockCollection, mockDb };
+};
 
 describe('Find Tool', () => {
   let mockServer: jest.Mocked<McpServer>;
   let mockClient: jest.Mocked<MongoDBClient>;
+  let mockFindCursor: jest.Mocked<FindCursor>;
+  let mockCollection: jest.Mocked<Collection>;
+  let mockDb: jest.Mocked<Db>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    const mocks = createBaseMocks();
+
+    mockFindCursor = mocks.mockFindCursor;
+    mockCollection = mocks.mockCollection;
+    mockDb = mocks.mockDb;
 
     mockServer = {
       registerTool: jest.fn(),
@@ -229,21 +248,23 @@ describe('Find Tool', () => {
   it('should stream results to a file if saveToFile is true', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
-    // Mock the cursor with async iterator
+    // Mock the cursor with all required methods for both streaming and normal operations
     const mockCursor = {
       [Symbol.asyncIterator]: jest.fn().mockImplementation(async function*() {
         yield { _id: 1, name: 'test' };
       }),
+      limit: jest.fn().mockReturnThis(),
+      project: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
+      toArray: jest.fn().mockResolvedValue([{ _id: 1, name: 'test' }]), // Add toArray method
     };
     const mockCollection = {
       find: jest.fn().mockReturnValue(mockCursor),
-      aggregate: jest.fn(),
-      countDocuments: jest.fn(),
-    };
+    } as unknown as jest.Mocked<Collection>;
 
     // Using 'any' for mocking database object because the exact type is complex to define
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
+
+    mockDb.collection.mockReturnValue(mockCollection);
 
     registerFindTool(mockServer, mockClient);
 
@@ -265,6 +286,7 @@ describe('Find Tool', () => {
 
     // Verify that the database and collection methods were called
     expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
+    expect(mockDb.collection).toHaveBeenCalledWith('testcollection');
     expect(mockCollection.find).toHaveBeenCalledWith({ status: 'active' });
 
     // Result should indicate successful file save
@@ -279,7 +301,8 @@ describe('Find Tool', () => {
 
   it('should return an error if finding fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    mockCollection.find.mockImplementation(() => {
+
+    const findSpy = jest.spyOn(mockCollection, 'find').mockImplementation(() => {
       throw new Error('Find failed');
     });
 
@@ -297,6 +320,8 @@ describe('Find Tool', () => {
       filter: { status: 'active' },
     };
     const result = await handler(params);
+
+    findSpy.mockRestore();
 
     expect(result).toEqual(
       toolError(new Error('Find failed')),
