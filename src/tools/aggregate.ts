@@ -38,14 +38,15 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
       }
 
       try {
-        const db = client.getDatabase(params.database);
-        const collection = db.collection(params.collection);
+        const { database, collection: collectionName, pipeline, saveToFile } = params;
+        const db = client.getDatabase(database);
+        const collection = db.collection(collectionName);
 
         // Check if pipeline contains dangerous operations in read-only mode
         if (client.isReadonly()) {
           const dangerousStages = ['$out', '$merge'];
 
-          for (const stage of params.pipeline) {
+          for (const stage of pipeline) {
             const stageName = Object.keys(stage)[0];
 
             if (stageName && dangerousStages.includes(stageName)) {
@@ -54,46 +55,45 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
           }
         }
 
-        if (params.saveToFile) {
+        if (saveToFile) {
           // Create aggregation cursor and stream directly to file without accumulating in memory
-          const cursor = collection.aggregate(params.pipeline);
-          const filePath = params.filePath ?? generateTempFilePath();
+          const cursor = collection.aggregate(pipeline);
+          const { filePath = generateTempFilePath(), format = 'jsonl' } = params;
           // Ensure directory exists
           const dir = dirname(filePath);
 
           await mkdir(dir, { recursive: true });
 
-          // Choose streaming function based on format parameter
-          if (params.format === 'json') {
-            await streamMongoCursorToFileAsArray(cursor, filePath);
+          // Choose streaming function based on format parameter and get the count of processed documents
+          let processedCount: number;
+
+          if (format === 'json') {
+            processedCount = await streamMongoCursorToFileAsArray(cursor, filePath);
           } else {
             // Default to jsonl format
-            await streamMongoCursorToFile(cursor, filePath);
+            processedCount = await streamMongoCursorToFile(cursor, filePath);
           }
 
           return toolSuccess({
             savedToFile: true,
             filePath,
-            database: params.database,
-            collection: params.collection,
-            // Using nullish coalescing operator in case params.format is null or undefined
-            // even though the Zod schema defines it as optional with default, the TypeScript
-            // type still allows undefined, so the operator is necessary
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            format: params.format ?? 'jsonl',
-            message: 'Aggregation results exported successfully',
+            database,
+            collection: collectionName,
+            format,
+            processedCount,
+            message: `Aggregation results exported successfully. ${processedCount} documents were written to the file.`,
           });
         } else {
           // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
           // Execute the aggregation pipeline with a reasonable limit to prevent memory issues
           const maxDocs = 1000; // Reasonable limit for in-memory operations
           // Add $limit stage to the pipeline to limit results
-          const pipelineWithLimit = [...params.pipeline, { $limit: maxDocs }];
+          const pipelineWithLimit = [...pipeline, { $limit: maxDocs }];
           const cursor = collection.aggregate(pipelineWithLimit);
           const documents = await cursor.toArray();
           const result = {
-            database: params.database,
-            collection: params.collection,
+            database,
+            collection: collectionName,
             results: documents,
             count: documents.length,
             hasMoreResults: documents.length >= maxDocs, // Indicate if there were more results that were limited

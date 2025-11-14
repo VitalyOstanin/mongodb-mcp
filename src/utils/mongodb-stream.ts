@@ -8,6 +8,7 @@ import type { FindCursor, AggregationCursor } from 'mongodb';
  */
 class JsonLinesTransform extends Transform {
   private isFirst: boolean = true;
+  public count: number = 0;
 
   constructor() {
     super({ objectMode: true });
@@ -21,21 +22,29 @@ class JsonLinesTransform extends Transform {
       // For the first document, don't add a newline
       if (this.isFirst) {
         this.isFirst = false;
-        callback(null, JSON.stringify(chunk));
       } else {
-        callback(null, `\n${  JSON.stringify(chunk)}`);
+        // Add newline before the JSON string for subsequent documents
+        callback(null, `\n${JSON.stringify(chunk)}`);
+        this.count++;
+
+        return;
       }
+      // First document doesn't have a newline before it
+      callback(null, JSON.stringify(chunk));
+      this.count++;
     } catch (err) {
       callback(err as Error);
     }
   }
 }
 
+
 /**
  * Transform stream that formats documents as a JSON array
  */
 class JsonArrayTransform extends Transform {
   private isFirst: boolean = true;
+  public count: number = 0;
 
   constructor() {
     super({ objectMode: true });
@@ -50,11 +59,12 @@ class JsonArrayTransform extends Transform {
 
       if (this.isFirst) {
         this.isFirst = false;
-        result = `[\n${  JSON.stringify(chunk)}`;
+        result = `[\n${JSON.stringify(chunk)}`;
       } else {
-        result = `,\n${  JSON.stringify(chunk)}`;
+        result = `,\n${JSON.stringify(chunk)}`;
       }
       callback(null, result);
+      this.count++;
     } catch (err) {
       callback(err as Error);
     }
@@ -73,8 +83,9 @@ class JsonArrayTransform extends Transform {
  * Streams MongoDB cursor directly to a file in JSON Lines format (each document as separate JSON object)
  * @param cursor MongoDB cursor to stream from
  * @param filePath Path to the output file
+ * @returns The number of documents processed
  */
-export async function streamMongoCursorToFile(cursor: FindCursor | AggregationCursor, filePath: string): Promise<void> {
+export async function streamMongoCursorToFile(cursor: FindCursor | AggregationCursor, filePath: string): Promise<number> {
   // Create a write stream to the output file
   const writeStream = createWriteStream(filePath, { encoding: 'utf8' });
   // Create a JSON Lines transform to format the documents
@@ -91,14 +102,17 @@ export async function streamMongoCursorToFile(cursor: FindCursor | AggregationCu
     jsonLinesTransform,
     writeStream,
   );
+
+  return jsonLinesTransform.count;
 }
 
 /**
  * Streams MongoDB cursor directly to a file in JSON array format
  * @param cursor MongoDB cursor to stream from
  * @param filePath Path to the output file
+ * @returns The number of documents processed
  */
-export async function streamMongoCursorToFileAsArray(cursor: FindCursor | AggregationCursor, filePath: string): Promise<void> {
+export async function streamMongoCursorToFileAsArray(cursor: FindCursor | AggregationCursor, filePath: string): Promise<number> {
   // Create a write stream to the output file
   const writeStream = createWriteStream(filePath, { encoding: 'utf8' });
   // Create a JSON array transform to format the documents
@@ -115,6 +129,8 @@ export async function streamMongoCursorToFileAsArray(cursor: FindCursor | Aggreg
     jsonArrayTransform,
     writeStream,
   );
+
+  return jsonArrayTransform.count;
 }
 
 export type MongoCursor = FindCursor | AggregationCursor;

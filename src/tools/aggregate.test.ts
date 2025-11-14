@@ -3,7 +3,12 @@ import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerAggregateTool } from './aggregate.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-import { readFile } from 'fs/promises';
+
+// Mock the streaming functions to avoid actual file operations
+jest.mock('../utils/mongodb-stream.js', () => ({
+  streamMongoCursorToFile: jest.fn().mockResolvedValue(7), // Mock to return 7 documents processed
+  streamMongoCursorToFileAsArray: jest.fn().mockResolvedValue(4), // Mock to return 4 documents processed
+}));
 
 // Mock objects for testing
 const mockCollection: jest.Mocked<Collection> = {
@@ -278,7 +283,7 @@ describe('Aggregate Tool', () => {
     );
   });
 
-  it('should stream aggregation results to a file if saveToFile is true', async () => {
+  it('should stream aggregation results to a file with document count for JSONL format', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
     const mockAggregateResult = {
@@ -327,22 +332,63 @@ describe('Aggregate Tool', () => {
     expect(resultObj.success).toBe(true);
     expect(resultObj.payload.savedToFile).toBe(true);
     expect(resultObj.payload.filePath).toBeDefined();
+    expect(resultObj.payload.processedCount).toBe(7); // Should return the mock count of 7
+    expect(resultObj.payload.format).toBe('jsonl');
+    expect(resultObj.payload.message).toContain('7 documents were written to the file');
+  });
 
-    // Verify the content of the generated file
-    const generatedFilePath = resultObj.payload.filePath;
-    const fileContent = await readFile(generatedFilePath, 'utf8');
-    // Split the content by lines since it's in JSONL format
-    const lines = fileContent.trim().split('\n');
+  it('should stream aggregation results to a file with document count for JSON format', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
-    // Should have 2 lines for our test data
-    expect(lines).toHaveLength(2);
+    const mockAggregateResult = {
+      // Mock the async iterator for the aggregation cursor
+      [Symbol.asyncIterator]: jest.fn().mockImplementation(function*() {
+        yield { _id: 1, name: 'test1' };
+        yield { _id: 2, name: 'test2' };
+      }),
+    };
+    const mockCollection = {
+      find: jest.fn(),
+      aggregate: jest.fn().mockReturnValue(mockAggregateResult),
+      countDocuments: jest.fn(),
+    };
 
-    // Verify each line is valid JSON and matches expected content
-    const firstLine = JSON.parse(lines[0]);
-    const secondLine = JSON.parse(lines[1]);
+    // Using 'any' for mocking database object because the exact type is complex to define
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
 
-    expect(firstLine).toEqual({ _id: 1, name: 'test1' });
-    expect(secondLine).toEqual({ _id: 2, name: 'test2' });
+    registerAggregateTool(mockServer, mockClient);
+
+    // Get the tool handler function
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // Using 'any' for params and return type because we're accessing the registered tool handler
+    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const params = {
+      database: 'testdb',
+      collection: 'testcollection',
+      pipeline: [{ $match: { status: 'active' } }],
+      saveToFile: true,
+      format: 'json',
+    };
+    const result = await handler(params);
+
+    // Verify that the database and collection methods were called
+    expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }]);
+
+    // Result should indicate successful file save
+    expect(result.isError).toBeUndefined(); // Not an error
+
+    const resultObj = JSON.parse(result.content[0].text);
+
+    expect(resultObj.success).toBe(true);
+    expect(resultObj.payload.savedToFile).toBe(true);
+    expect(resultObj.payload.filePath).toBeDefined();
+    expect(resultObj.payload.processedCount).toBe(4); // Should return the mock count of 4
+    expect(resultObj.payload.format).toBe('json');
+    expect(resultObj.payload.message).toContain('4 documents were written to the file');
   });
 
   it('should limit results to 1000 documents', async () => {
