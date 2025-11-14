@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2025-11-14
+
+### Added
+
+- Document count feature to MongoDB stream operations
+- Improvements to MongoDB streaming tests
+
 ## [0.2.0] - 2025-11-14
 
 ### Added
@@ -33,6 +40,7 @@
 - TypeScript implementation with proper type safety
 - MCP tool registration and server infrastructure
 
+[0.3.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.2.0
 [0.1.1]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.1.1
 [0.1.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.1.0
