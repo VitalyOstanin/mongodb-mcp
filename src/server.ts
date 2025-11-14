@@ -17,6 +17,13 @@ import { registerAggregateTool } from "./tools/aggregate.js";
 import { registerExplainTool } from "./tools/explain.js";
 import { registerMongodbLogsTool } from "./tools/mongodb-logs.js";
 import { registerServiceInfoTool } from "./tools/service-info.js";
+import { registerInsertTool } from "./tools/insert.js";
+import { registerUpdateTool } from "./tools/update.js";
+import { registerDeleteTool } from "./tools/delete.js";
+import { registerCreateIndexTool } from "./tools/create-index.js";
+import { registerDropIndexTool } from "./tools/drop-index.js";
+import { registerCreateCollectionTool } from "./tools/create-collection.js";
+import { registerDropCollectionTool } from "./tools/drop-collection.js";
 
 
 export class MongoDBServer {
@@ -63,6 +70,13 @@ export class MongoDBServer {
     registerExplainTool(this.server, this.mongoClient);
     registerMongodbLogsTool(this.server, this.mongoClient);
     registerServiceInfoTool(this.server, this.mongoClient);
+    registerInsertTool(this.server, this.mongoClient);
+    registerUpdateTool(this.server, this.mongoClient);
+    registerDeleteTool(this.server, this.mongoClient);
+    registerCreateIndexTool(this.server, this.mongoClient);
+    registerDropIndexTool(this.server, this.mongoClient);
+    registerCreateCollectionTool(this.server, this.mongoClient);
+    registerDropCollectionTool(this.server, this.mongoClient);
 
 
     // If auto-connect option is enabled, connect to MongoDB on startup

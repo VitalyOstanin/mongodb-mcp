@@ -107,5 +107,12 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 | Tool | Description | Main Parameters |
 | --- | --- | --- |
 | `aggregate` | Run an aggregation against a MongoDB collection | `database` — database name, `collection` — collection name, `pipeline` — array of aggregation stages |
+| `insert` | Insert one or multiple documents into a MongoDB collection | `database` — database name, `collection` — collection name, `document` — single document to insert, `documents` — array of documents to insert (use instead of single document) |
+| `update` | Update one or multiple documents in a MongoDB collection | `database` — database name, `collection` — collection name, `filter` — filter to match documents for update, `update` — update operations to perform, `upsert` — if true, creates a new document if no documents match the filter (default: false), `multi` — if true, updates all matching documents (updateMany), otherwise updates only one (updateOne) (default: false) |
+| `delete` | Delete one or multiple documents from a MongoDB collection | `database` — database name, `collection` — collection name, `filter` — filter to match documents for deletion, `multi` — if true, deletes all matching documents (deleteMany), otherwise deletes only one (deleteOne) (default: false) |
+| `create-index` | Create an index on a MongoDB collection | `database` — database name, `collection` — collection name, `keys` — index specification document (e.g., { field: 1 } for ascending, { field: -1 } for descending), `options` — additional index options (e.g., { unique: true, sparse: true }) |
+| `drop-index` | Drop an index from a MongoDB collection | `database` — database name, `collection` — collection name, `index` — index name or index specification document to drop |
+| `create-collection` | Create a new collection in a MongoDB database | `database` — database name, `collection` — collection name to create, `options` — additional collection options (e.g., { capped: true, size: 1024 }) |
+| `drop-collection` | Drop a collection from a MongoDB database | `database` — database name, `collection` — collection name to drop |
 
 **Note:** The `aggregate` tool allows read-only operations by default but can contain stages that modify data when not in read-only mode. The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
