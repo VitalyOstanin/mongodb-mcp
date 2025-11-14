@@ -15,8 +15,21 @@ const mockFindCursor = {
 const mockCollection: jest.Mocked<Collection> = {
   aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
   find: jest.fn().mockReturnValue(mockFindCursor),
+  findOne: jest.fn().mockReturnValue({}),
+  countDocuments: jest.fn().mockResolvedValue(0),
   insertOne: jest.fn(),
+  insertMany: jest.fn(),
   updateOne: jest.fn(),
+  updateMany: jest.fn(),
+  deleteOne: jest.fn(),
+  deleteMany: jest.fn(),
+  findOneAndReplace: jest.fn(),
+  findOneAndUpdate: jest.fn(),
+  findOneAndDelete: jest.fn(),
+  bulkWrite: jest.fn(),
+  createIndex: jest.fn(),
+  dropIndex: jest.fn(),
+  drop: jest.fn(),
 } as unknown as jest.Mocked<Collection>;
 const mockDb: jest.Mocked<Db> = {
   collection: jest.fn().mockReturnValue(mockCollection),
@@ -181,6 +194,163 @@ describe('MongoDBClient', () => {
       expect(() => {
         collection.aggregate(pipeline);
       }).toThrow("Aggregation stage '$out' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like insertOne', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).insertOne({ name: 'test' });
+      }).toThrow("Operation 'insertOne' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like insertMany', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).insertMany([{ name: 'test1' }, { name: 'test2' }]);
+      }).toThrow("Operation 'insertMany' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like updateOne', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).updateOne({ name: 'test' }, { $set: { updated: true } });
+      }).toThrow("Operation 'updateOne' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like updateMany', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).updateMany({ name: 'test' }, { $set: { updated: true } });
+      }).toThrow("Operation 'updateMany' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like deleteOne', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).deleteOne({ name: 'test' });
+      }).toThrow("Operation 'deleteOne' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like deleteMany', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).deleteMany({ name: 'test' });
+      }).toThrow("Operation 'deleteMany' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like findOneAndReplace', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).findOneAndReplace({ name: 'test' }, { name: 'replacement' });
+      }).toThrow("Operation 'findOneAndReplace' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like findOneAndUpdate', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).findOneAndUpdate({ name: 'test' }, { $set: { updated: true } });
+      }).toThrow("Operation 'findOneAndUpdate' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like findOneAndDelete', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).findOneAndDelete({ name: 'test' });
+      }).toThrow("Operation 'findOneAndDelete' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like bulkWrite', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).bulkWrite([{ insertOne: { document: { name: 'test' } } }]);
+      }).toThrow("Operation 'bulkWrite' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like createIndex', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).createIndex({ name: 1 });
+      }).toThrow("Operation 'createIndex' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like dropIndex', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).dropIndex({ name: 1 });
+      }).toThrow("Operation 'dropIndex' is not allowed in read-only mode");
+    });
+
+    it('should block collection-level write operations like drop', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (collection as any).drop();
+      }).toThrow("Operation 'drop' is not allowed in read-only mode");
+    });
+
+    it('should allow collection-level read operations like find', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        collection.find({ name: 'test' });
+      }).not.toThrow();
+    });
+
+    it('should allow collection-level read operations like findOne', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        collection.findOne({ name: 'test' });
+      }).not.toThrow();
+    });
+
+    it('should allow collection-level read operations like countDocuments', () => {
+      const db = client.getDatabase('test');
+      const collection = db.collection('users');
+
+      expect(() => {
+        collection.countDocuments({ name: 'test' });
+      }).not.toThrow();
     });
   });
 

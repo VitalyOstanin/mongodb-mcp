@@ -193,9 +193,28 @@ export class MongoDBClient {
   }
 
   private createReadonlyCollectionProxy<T extends Document = Document>(collection: Collection<T>) {
-    // Create a proxy for collection that protects aggregation operations
+    // Create a proxy for collection that protects write operations
     return new Proxy(collection, {
       get(target, prop: string) {
+        // Check if operation is a write operation
+        const writeOperations = [
+          'insertOne', 'insertMany', 'updateOne', 'updateMany',
+          'replaceOne', 'deleteOne', 'deleteMany', 'findOneAndReplace',
+          'findOneAndUpdate', 'findOneAndDelete', 'bulkWrite',
+          'createIndex', 'dropIndex', 'createIndexes', 'dropIndexes',
+          'renameIndex', 'drop', 'initializeOrderedBulkOp', 'initializeUnorderedBulkOp',
+          'insert', // Legacy insert method
+          'save', // Legacy save method
+          'update', // Legacy update method
+          'remove', // Legacy remove method
+        ];
+
+        if (writeOperations.includes(prop)) {
+          return function() {
+            throw new Error(`Operation '${prop}' is not allowed in read-only mode`);
+          };
+        }
+
         // Use proper typing with Record for dynamic property access
         // Converting to 'unknown' first to satisfy TypeScript constraints
         const result = (target as unknown as Record<string, unknown>)[prop];

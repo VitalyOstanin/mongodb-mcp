@@ -115,4 +115,9 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 | `create-collection` | Create a new collection in a MongoDB database | `database` — database name, `collection` — collection name to create, `options` — additional collection options (e.g., { capped: true, size: 1024 }) |
 | `drop-collection` | Drop a collection from a MongoDB database | `database` — database name, `collection` — collection name to drop |
 
-**Note:** The `aggregate` tool allows read-only operations by default but can contain stages that modify data when not in read-only mode. The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
+**Note:** The server runs in read-only mode by default to prevent accidental data modifications. In read-only mode, all write operations are blocked including:
+- Database-level operations: `insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`, `createIndex`, `dropIndex`, `dropDatabase`, `renameCollection`, etc.
+- Collection-level operations: `insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`, `findOneAndReplace`, `findOneAndUpdate`, `findOneAndDelete`, `bulkWrite`, `createIndex`, `dropIndex`, `drop`, etc.
+- Aggregation stages that modify data: `$out`, `$merge`
+
+The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
