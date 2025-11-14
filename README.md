@@ -28,9 +28,6 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 - [MCP Tools](#mcp-tools)
   - [Read-Only Mode Tools](#read-only-mode-tools)
   - [Non-Read-Only Mode Tools](#non-read-only-mode-tools)
-- [Important Notes](#important-notes)
-  - [Read-Only Mode](#read-only-mode)
-  - [Destructive Operations](#destructive-operations)
 
 ## Requirements
 
@@ -112,17 +109,3 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 | `aggregate` | Run an aggregation against a MongoDB collection | `database` — database name, `collection` — collection name, `pipeline` — array of aggregation stages |
 
 **Note:** The `aggregate` tool allows read-only operations by default but can contain stages that modify data when not in read-only mode. The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
-
-## Important Notes
-
-### Read-Only Mode
-
-The server supports read-only mode which prevents destructive operations:
-
-- **Read-only protection**: When `--read-only` flag is used (default), write operations are blocked. Use `--read-only=false` to allow write operations.
-- **Protected operations**: `update`, `delete`, `insert`, `$out`, and `$merge` operations are forbidden
-- **Connection safety**: Read-only mode ensures no accidental data modifications occur
-
-### Destructive Operations
-
-The MongoDB MCP server operates in read-only mode by default to prevent accidental data loss. Some operations that could modify data are restricted and would only be available in read-write mode (which is not enabled by default).
