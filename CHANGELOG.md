@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1] - 2025-11-14
+
+### Added
+
+- MongoDB write operation tools (insert, update, delete, create-index, create-collection, drop-index, drop-collection)
+- Documentation updates to reflect new write operations
+- Comprehensive write operation capabilities to complement existing read operations
+
 ## [0.1.0] - 2025-11-13
 
 ### Added
