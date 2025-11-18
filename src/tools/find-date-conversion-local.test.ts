@@ -204,7 +204,7 @@ describe('convertStringDatesToObjects', () => {
     };
 
     expect(result.user.profile.createdAt).toBeInstanceOf(Date);
-    expect((result.user.profile.createdAt as Date).toISOString()).toBe('2025-11-14T10:31:26.517Z');
+    expect((result.user.profile.createdAt).toISOString()).toBe('2025-11-14T10:31:26.517Z');
     expect(result.posts[0].createdAt).toBeInstanceOf(Date);
     expect((result.posts[0].createdAt as Date).toISOString()).toBe('2025-11-15T10:31:26.517Z');
     expect(result.posts[1].createdAt).toBe('invalid date');
