@@ -18,11 +18,11 @@ describe('serviceInfo Tool', () => {
     };
   });
 
-  it('should register the service_info tool correctly', () => {
+  it('should register the service-info tool correctly', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
-      'service_info',
+      'service-info',
       expect.objectContaining({
         title: 'Service Information',
         description: 'Get MongoDB service information and current connection status',

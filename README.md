@@ -88,7 +88,7 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 
 | Tool | Description | Main Parameters |
 | --- | --- | --- |
-| `service_info` | Get MongoDB service information, environment configuration, version, and current timezone | — |
+| `service-info` | Get MongoDB service information, environment configuration, version, and current timezone | — |
 | `connect` | Establish connection to MongoDB using connection string | — |
 | `disconnect` | Disconnect from MongoDB | — |
 | `list_databases` | List all databases in the MongoDB instance | — |

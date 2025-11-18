@@ -25,7 +25,7 @@ describe('disconnectTool', () => {
       'disconnect',
       expect.objectContaining({
         title: 'Disconnect from MongoDB',
-        description: 'Disconnect from MongoDB and clear the connection. Use service_info to check connection status after disconnecting.',
+        description: 'Disconnect from MongoDB and clear the connection. Use service-info to check connection status after disconnecting.',
       }),
       expect.any(Function),
     );

@@ -23,7 +23,7 @@ export type ConnectParams = z.infer<typeof connectSchema>;
 
 export const connectTool: Tool = {
   name: 'connect',
-  description: 'Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING. Call service_info first to check current connection status.',
+  description: 'Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING. Call service-info first to check current connection status.',
   inputSchema: connectSchema,
   examples: [
     {

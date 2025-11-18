@@ -14,7 +14,7 @@ export type ServiceInfoParams = z.infer<typeof serviceInfoSchema>;
 // The client parameter is required to match the registration function signature used by other tools
 export function registerServiceInfoTool(server: McpServer, client: MongoDBClient) {
   server.registerTool(
-    'service_info',
+    'service-info',
     {
       title: 'Service Information',
       description: 'Get MongoDB service information and current connection status',

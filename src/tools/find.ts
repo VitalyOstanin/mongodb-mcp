@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
+import type { Filter, Document } from 'mongodb';
+import { DateTime } from 'luxon';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
@@ -10,7 +12,7 @@ import { streamMongoCursorToFile, streamMongoCursorToFileAsArray } from '../util
 const findSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  filter: z.record(z.unknown()).optional().default({}).describe('The query filter, matching the syntax of the query argument of db.collection.find()'),
+  filter: z.record(z.unknown()).optional().default({}).describe('The query filter, matching the syntax of the query argument of db.collection.find(). String dates in filter (e.g., "2025-11-14T00:00:00.000Z") will be automatically converted to Date objects. When using date ranges, account for the server timezone.'),
   limit: z.number().optional().describe('The maximum number of documents to return'),
   projection: z.record(z.unknown()).optional().describe('The projection, matching the syntax of projection argument of db.collection.find()'),
   sort: z.record(z.unknown()).optional().describe('A document, describing the sort order, matching the syntax of sort argument of cursor.sort()'),
@@ -21,6 +23,80 @@ const findSchema = z.object({
 
 export type FindParams = z.infer<typeof findSchema>;
 
+// Define types for MongoDB filter objects to avoid 'any' type errors
+type MongoFilterValue =
+  | string
+  | number
+  | boolean
+  | Date
+  | null
+  | MongoFilterValue[]
+  | { [key: string]: unknown | { [op: string]: unknown } };
+
+// Function to convert string dates to Date objects in a filter
+export function convertStringDatesToObjects(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') {
+    if (typeof obj === 'string') {
+      // Use Luxon to check if it's a valid ISO date string
+      const dateTime = DateTime.fromISO(obj);
+
+      // Check if the string is a valid date
+      if (dateTime.isValid) {
+        return dateTime.toJSDate();
+      }
+    }
+
+    return obj;
+  }
+
+  // Process arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => convertStringDatesToObjects(item));
+  }
+
+  const result: { [key: string]: unknown } = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    // For all string values, check if they are valid ISO date strings
+    if (typeof value === 'string') {
+      result[key] = convertStringDatesToObjects(value);
+    } else if (typeof value === 'object' && value !== null) {
+      // Special handling for MongoDB operators that typically contain date values (e.g., $gte, $lt, $in, etc.)
+      if (key.startsWith('$')) { // MongoDB operator
+        const convertedValue: { [op: string]: unknown } = {};
+
+        for (const [op, opValue] of Object.entries(value)) {
+          // Apply the same date conversion logic to operator values
+          convertedValue[op] = convertStringDatesToObjects(opValue);
+        }
+        result[key] = convertedValue;
+      } else {
+        // Regular field with object value - check if this object contains MongoDB operators
+        const hasMongoOperator = Object.keys(value).some(k => k.startsWith('$'));
+
+        if (hasMongoOperator) {
+          // This is a field with MongoDB operators (e.g., { $gte: "...", $lt: "..." })
+          const convertedValue: { [op: string]: unknown } = {};
+
+          for (const [op, opValue] of Object.entries(value)) {
+            // Apply the same date conversion logic to operator values
+            convertedValue[op] = convertStringDatesToObjects(opValue);
+          }
+          result[key] = convertedValue;
+        } else {
+          // Regular nested object - process recursively
+          result[key] = convertStringDatesToObjects(value);
+        }
+      }
+    } else {
+      // For other primitive types apply recursive conversion
+      result[key] = convertStringDatesToObjects(value);
+    }
+  }
+
+  return result;
+}
+
 // Export the registration function for the server
 // The client parameter is required to match the registration function signature used by other tools
 export function registerFindTool(server: McpServer, client: MongoDBClient) {
@@ -28,7 +104,7 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
     'find',
     {
       title: 'Find Documents',
-      description: 'Run a find query against a MongoDB collection',
+      description: 'Run a find query against a MongoDB collection. IMPORTANT: Before using this tool, consider running the collection-schema tool to determine the correct field names in the collection. When using date ranges, account for the server timezone. For example, when querying records for a specific date, set time range boundaries accounting for the server timezone (not UTC). NOTE: The default limit is 10 documents. To retrieve more documents, explicitly specify a higher limit value. For full results without limitation, set a high limit value appropriate to your needs.',
       inputSchema: findSchema.shape,
     },
     async (params: FindParams) => {
@@ -41,10 +117,12 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
       try {
         const db = client.getDatabase(database);
         const collection = db.collection(collectionName);
+        // Convert string dates in filter to Date objects
+        const processedFilter = convertStringDatesToObjects(filter) as MongoFilterValue;
 
         if (saveToFile) {
           // For saving to file, create the query with filters, projection and sort
-          let query = collection.find(filter);
+          let query = collection.find(processedFilter as Filter<Document>);
 
           // Only apply limit if explicitly provided (do not use default limit when saving to file)
           if (limit !== undefined) {
@@ -91,7 +169,7 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
           });
         } else {
           // For in-memory results (when not saving to file), use a default limit of 10 and cap at 1000 to prevent memory issues
-          let query = collection.find(filter);
+          let query = collection.find(processedFilter as Filter<Document>);
           // Apply default limit of 10 when not provided, but cap at 1000 to prevent memory issues
           const effectiveLimit = Math.min(limit ?? 10, 1000);
 

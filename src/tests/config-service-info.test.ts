@@ -41,7 +41,7 @@ describe('Config and Service Info Tests', () => {
     });
   });
 
-  describe('service_info tool response', () => {
+  describe('service-info tool response', () => {
     let mockServer: jest.Mocked<McpServer>;
     let mockClient: jest.Mocked<MongoDBClient>;
 
