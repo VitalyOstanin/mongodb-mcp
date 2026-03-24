@@ -32,15 +32,13 @@ jobs:
 
     - name: Verify package contents
       run: |
-        echo "📦 Package contents:"
+        echo "Package contents:"
         npm pack --dry-run
         echo ""
-        echo "✅ Package verification complete"
+        echo "Package verification complete"
 
-    - name: Publish to npm
+    - name: Publish to npm (Trusted Publishing via OIDC)
       run: npm publish --provenance --access public
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     - name: Create GitHub Release
       env:
@@ -48,7 +46,7 @@ jobs:
       run: |
         gh release create ${{ github.ref_name }} \
           --title "Release ${{ github.ref_name }}" \
-          --notes "🚀 New release of MongoDB MCP Server
+          --notes "New release of MongoDB MCP Server
 
         **Package**: \`@vitalyostanin/mongodb-mcp@${{ github.ref_name }}\`
 
