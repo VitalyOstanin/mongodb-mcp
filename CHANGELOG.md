@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.2] - 2026-03-24
+
+### Changed
+
+- Removed redundant readonlyMode parameter from connect method; readonly mode is now set exclusively via CLI argument
+
 ## [0.3.1] - 2025-11-18
 
 ### Fixed
@@ -46,6 +52,7 @@
 - TypeScript implementation with proper type safety
 - MCP tool registration and server infrastructure
 
+[0.3.2]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.2
 [0.3.1]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.1
 [0.3.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.2.0
