@@ -28,7 +28,7 @@ export class MongoDBClient {
     return this.readonlyMode;
   }
 
-  async connect(readonlyMode: boolean = true): Promise<void> {
+  async connect(): Promise<void> {
     // Only use connection string from environment variable
     const connString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
@@ -87,7 +87,7 @@ export class MongoDBClient {
       this.isConnected = true;
       this.disconnectReason = null; // Clear disconnect reason on successful connection
       this.connectionError = null; // Clear any previous connection error
-      this.setReadonlyMode(readonlyMode);
+      // readonlyMode is set only via CLI arg (setReadonlyMode), not on reconnect
     } catch (error) {
       this.connectionError = error instanceof Error ? error : new Error(String(error));
       throw new Error(`Failed to connect to MongoDB: ${error}`);

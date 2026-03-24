@@ -84,8 +84,8 @@ export class MongoDBServer {
       const connectionString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
       if (connectionString) {
-        // Connect in readonly mode if it's enabled
-        this.mongoClient.connect(readonlyMode).catch(error => {
+        // readonlyMode is already set via setReadonlyMode above
+        this.mongoClient.connect().catch(error => {
           console.error("Failed to auto-connect to MongoDB:", error);
           // Set connection error state or emit event for proper error handling
           // Consider retrying connection or notifying the user
