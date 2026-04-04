@@ -11,6 +11,7 @@ const aggregateSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
   pipeline: z.array(z.record(z.unknown())).describe('An array of aggregation stages to execute'),
+  noLimit: z.boolean().optional().describe('Disable the automatic $limit stage appended to the pipeline. Useful for pipelines ending with $out or $merge.'),
   saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
   filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
   format: z.enum(['jsonl', 'json']).optional().default('jsonl').describe('Output format when saving to file: jsonl (JSON Lines) or json (JSON array format)'),
@@ -87,16 +88,16 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
           // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
           // Execute the aggregation pipeline with a reasonable limit to prevent memory issues
           const maxDocs = 1000; // Reasonable limit for in-memory operations
-          // Add $limit stage to the pipeline to limit results
-          const pipelineWithLimit = [...pipeline, { $limit: maxDocs }];
-          const cursor = collection.aggregate(pipelineWithLimit);
+          // Add $limit stage to the pipeline to limit results (unless noLimit is set)
+          const effectivePipeline = params.noLimit ? pipeline : [...pipeline, { $limit: maxDocs }];
+          const cursor = collection.aggregate(effectivePipeline);
           const documents = await cursor.toArray();
           const result = {
             database,
             collection: collectionName,
             results: documents,
             count: documents.length,
-            hasMoreResults: documents.length >= maxDocs, // Indicate if there were more results that were limited
+            hasMoreResults: !params.noLimit && documents.length >= maxDocs, // Indicate if there were more results that were limited
           };
 
           return toolSuccess(result);

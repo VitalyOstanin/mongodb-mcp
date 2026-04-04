@@ -106,7 +106,7 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 
 | Tool | Description | Main Parameters |
 | --- | --- | --- |
-| `aggregate` | Run an aggregation against a MongoDB collection | `database` — database name, `collection` — collection name, `pipeline` — array of aggregation stages |
+| `aggregate` | Run an aggregation against a MongoDB collection | `database` — database name, `collection` — collection name, `pipeline` — array of aggregation stages, `noLimit` — disable the automatic $limit stage (useful for pipelines ending with $out or $merge) |
 | `insert` | Insert one or multiple documents into a MongoDB collection | `database` — database name, `collection` — collection name, `document` — single document to insert, `documents` — array of documents to insert (use instead of single document) |
 | `update` | Update one or multiple documents in a MongoDB collection | `database` — database name, `collection` — collection name, `filter` — filter to match documents for update, `update` — update operations to perform, `upsert` — if true, creates a new document if no documents match the filter (default: false), `multi` — if true, updates all matching documents (updateMany), otherwise updates only one (updateOne) (default: false) |
 | `delete` | Delete one or multiple documents from a MongoDB collection | `database` — database name, `collection` — collection name, `filter` — filter to match documents for deletion, `multi` — if true, deletes all matching documents (deleteMany), otherwise deletes only one (deleteOne) (default: false) |

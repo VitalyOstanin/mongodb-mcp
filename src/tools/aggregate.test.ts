@@ -391,6 +391,87 @@ describe('Aggregate Tool', () => {
     expect(resultObj.payload.message).toContain('4 documents were written to the file');
   });
 
+  it('should skip $limit when noLimit is set', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+
+    const mockCursor = {
+      async toArray() {
+        return [
+          { _id: 1, name: 'Test' },
+          { _id: 2, name: 'Another Test' },
+        ];
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockCollection.aggregate.mockReturnValue(mockCursor as any);
+
+    registerAggregateTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const params = {
+      database: 'testdb',
+      collection: 'testcollection',
+      pipeline: [{ $match: { status: 'active' } }],
+      noLimit: true,
+    };
+    const result = await handler(params);
+
+    // Should NOT append $limit to the pipeline
+    expect(mockCollection.aggregate).toHaveBeenCalledWith([{ $match: { status: 'active' } }]);
+
+    expect(result).toEqual(
+      toolSuccess({
+        database: 'testdb',
+        collection: 'testcollection',
+        results: [
+          { _id: 1, name: 'Test' },
+          { _id: 2, name: 'Another Test' },
+        ],
+        count: 2,
+        hasMoreResults: false,
+      }),
+    );
+  });
+
+  it('should return hasMoreResults false when noLimit is set even with maxDocs results', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+
+    const results: Array<{ _id: number; name: string }> = [];
+
+    for (let i = 0; i < 1000; i++) {
+      results.push({ _id: i, name: `Test${i}` });
+    }
+
+    const mockCursor = {
+      async toArray() {
+        return results;
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockCollection.aggregate.mockReturnValue(mockCursor as any);
+
+    registerAggregateTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const params = {
+      database: 'testdb',
+      collection: 'testcollection',
+      pipeline: [{ $match: {} }],
+      noLimit: true,
+    };
+    const result = await handler(params);
+    const resultObj = JSON.parse(result.content[0].text);
+
+    expect(resultObj.payload.hasMoreResults).toBe(false);
+    expect(resultObj.payload.count).toBe(1000);
+  });
+
   it('should limit results to 1000 documents', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
