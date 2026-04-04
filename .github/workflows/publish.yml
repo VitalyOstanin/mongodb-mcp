@@ -55,4 +55,4 @@ jobs:
         npm install @vitalyostanin/mongodb-mcp@${{ github.ref_name }}
         \`\`\`
 
-        See [CHANGELOG](https://github.com/VitalyOstanin/mongodb-mcp/blob/${{ github.ref_name }}/README.md) for details."
+        See [CHANGELOG](https://github.com/VitalyOstanin/mongodb-mcp/blob/${{ github.ref_name }}/CHANGELOG.md) for details."
