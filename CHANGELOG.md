@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0] - 2026-04-04
+
+### Added
+
+- `noLimit` parameter for aggregate tool to disable automatic $limit stage appended to the pipeline (useful for pipelines ending with $out or $merge)
+
 ## [0.3.2] - 2026-03-24
 
 ### Changed
@@ -52,6 +58,7 @@
 - TypeScript implementation with proper type safety
 - MCP tool registration and server infrastructure
 
+[0.4.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.4.0
 [0.3.2]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.2
 [0.3.1]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.1
 [0.3.0]: https://github.com/VitalyOstanin/mongodb-mcp/releases/tag/v0.3.0
