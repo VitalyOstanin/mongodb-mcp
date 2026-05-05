@@ -36,7 +36,7 @@ export function registerInsertTool(server: McpServer, client: MongoDBClient) {
       // documents=[] is almost certainly a template-rendering bug on the
       // caller side. Reject it explicitly instead of silently falling back
       // to the single-document path with the unrelated `document` payload.
-      if (documents !== undefined && documents.length === 0) {
+      if (documents?.length === 0) {
         return toolError(new Error('documents array must not be empty when provided'));
       }
 

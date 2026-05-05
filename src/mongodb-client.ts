@@ -1,4 +1,4 @@
-import { MongoClient, type MongoClientOptions, type Db, type Collection, type Document } from 'mongodb';
+import { MongoClient, type Db, type Collection, type Document } from 'mongodb';
 import { findDangerousStage } from './utils/aggregation-safety.js';
 import { redactError } from './utils/redact.js';
 
@@ -86,7 +86,7 @@ export class MongoDBClient {
     }
 
     try {
-      this.client = new MongoClient(connString, {} as MongoClientOptions);
+      this.client = new MongoClient(connString, {});
 
       this.client.on('serverClosed', () => {
         if (this.isConnected) {
@@ -127,7 +127,7 @@ export class MongoDBClient {
       // readonlyMode is set only via CLI arg (setReadonlyMode), not on reconnect
     } catch (error) {
       this.connectionError = error instanceof Error ? error : new Error(String(error));
-      throw new Error(`Failed to connect to MongoDB: ${redactError(error)}`);
+      throw new Error(`Failed to connect to MongoDB: ${redactError(error)}`, { cause: error });
     }
   }
 

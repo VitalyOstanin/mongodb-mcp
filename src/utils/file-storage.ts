@@ -27,7 +27,7 @@ export async function saveDataToFile(options: FileStorageOptions): Promise<strin
     await writeFile(finalPath, jsonData, { encoding: "utf-8", flag: "wx" });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
-      throw new Error(`File already exists: ${finalPath}. Choose a different file path or remove the existing file.`);
+      throw new Error(`File already exists: ${finalPath}. Choose a different file path or remove the existing file.`, { cause: error });
     }
     throw error;
   }
