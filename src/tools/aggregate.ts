@@ -10,7 +10,7 @@ import { findDangerousStage } from '../utils/aggregation-safety.js';
 const aggregateSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  pipeline: z.array(z.record(z.unknown())).describe('An array of aggregation stages to execute'),
+  pipeline: z.array(z.record(z.string(), z.unknown())).describe('An array of aggregation stages to execute'),
   noLimit: z.boolean().optional().describe('Disable the automatic $limit stage appended to the pipeline. Useful for pipelines ending with $out or $merge.'),
   ...saveToFileSchemaFragment,
 });

@@ -6,8 +6,8 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const updateSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  filter: z.record(z.unknown()).describe('Filter to match documents for update'),
-  update: z.record(z.unknown()).describe('Update operations to perform'),
+  filter: z.record(z.string(), z.unknown()).describe('Filter to match documents for update'),
+  update: z.record(z.string(), z.unknown()).describe('Update operations to perform'),
   upsert: z.boolean().optional().default(false).describe('If true, creates a new document if no documents match the filter'),
   multi: z.boolean().optional().default(false).describe('If true, updates all matching documents (updateMany), otherwise updates only one (updateOne)'),
 });

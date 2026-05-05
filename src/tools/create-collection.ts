@@ -6,7 +6,7 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const createCollectionSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name to create'),
-  options: z.record(z.unknown()).optional().describe('Additional collection options (e.g., { capped: true, size: 1024 })'),
+  options: z.record(z.string(), z.unknown()).optional().describe('Additional collection options (e.g., { capped: true, size: 1024 })'),
 });
 
 export type CreateCollectionParams = z.infer<typeof createCollectionSchema>;

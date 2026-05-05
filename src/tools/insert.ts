@@ -6,8 +6,8 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const insertSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  document: z.record(z.unknown()).describe('Document to insert'),
-  documents: z.array(z.record(z.unknown())).optional().describe('Array of documents to insert (use instead of single document)'),
+  document: z.record(z.string(), z.unknown()).describe('Document to insert'),
+  documents: z.array(z.record(z.string(), z.unknown())).optional().describe('Array of documents to insert (use instead of single document)'),
 });
 
 export type InsertParams = z.infer<typeof insertSchema>;

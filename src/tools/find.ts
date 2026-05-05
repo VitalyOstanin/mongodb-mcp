@@ -12,10 +12,10 @@ import { findServerSideJsOperator } from '../utils/aggregation-safety.js';
 const findSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  filter: z.record(z.unknown()).optional().default({}).describe('The query filter, matching the syntax of the query argument of db.collection.find(). String dates in filter (e.g., "2025-11-14T00:00:00.000Z") will be automatically converted to Date objects. When using date ranges, account for the server timezone.'),
+  filter: z.record(z.string(), z.unknown()).optional().default({}).describe('The query filter, matching the syntax of the query argument of db.collection.find(). String dates in filter (e.g., "2025-11-14T00:00:00.000Z") will be automatically converted to Date objects. When using date ranges, account for the server timezone.'),
   limit: z.number().optional().describe('The maximum number of documents to return'),
-  projection: z.record(z.unknown()).optional().describe('The projection, matching the syntax of projection argument of db.collection.find()'),
-  sort: z.record(z.unknown()).optional().describe('A document, describing the sort order, matching the syntax of sort argument of cursor.sort()'),
+  projection: z.record(z.string(), z.unknown()).optional().describe('The projection, matching the syntax of projection argument of db.collection.find()'),
+  sort: z.record(z.string(), z.unknown()).optional().describe('A document, describing the sort order, matching the syntax of sort argument of cursor.sort()'),
   ...saveToFileSchemaFragment,
 });
 

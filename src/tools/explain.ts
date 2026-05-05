@@ -14,7 +14,7 @@ const explainSchema = z.object({
   collection: z.string().describe('Collection name'),
   method: z.object({
     name: z.enum(['find', 'count', 'aggregate']).describe('The method name to run explain on'),
-    arguments: z.record(z.unknown()).describe('Arguments for the method'),
+    arguments: z.record(z.string(), z.unknown()).describe('Arguments for the method'),
   }).describe('The method and its arguments to run'),
   verbosity: z.enum(['queryPlanner', 'queryPlannerExtended', 'executionStats', 'allPlansExecution']).optional().default('queryPlanner')
     .describe('The verbosity of the explain plan, defaults to queryPlanner. If the user wants to know how fast is a query in execution time, use executionStats.'),

@@ -8,7 +8,7 @@ const countSchema = z.object({
   database: z.string().describe("Database name"),
   collection: z.string().describe("Collection name"),
   query: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .optional()
     .default({})
     .describe(

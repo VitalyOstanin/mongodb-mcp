@@ -6,7 +6,7 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const deleteSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  filter: z.record(z.unknown()).describe('Filter to match documents for deletion'),
+  filter: z.record(z.string(), z.unknown()).describe('Filter to match documents for deletion'),
   multi: z.boolean().optional().default(false).describe('If true, deletes all matching documents (deleteMany), otherwise deletes only one (deleteOne)'),
 });
 

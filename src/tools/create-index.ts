@@ -6,8 +6,8 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const createIndexSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  keys: z.record(z.unknown()).describe('Index specification document (e.g., { field: 1 } for ascending, { field: -1 } for descending)'),
-  options: z.record(z.unknown()).optional().describe('Additional index options (e.g., { unique: true, sparse: true })'),
+  keys: z.record(z.string(), z.unknown()).describe('Index specification document (e.g., { field: 1 } for ascending, { field: -1 } for descending)'),
+  options: z.record(z.string(), z.unknown()).optional().describe('Additional index options (e.g., { unique: true, sparse: true })'),
 });
 
 export type CreateIndexParams = z.infer<typeof createIndexSchema>;

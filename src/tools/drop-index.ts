@@ -6,7 +6,7 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 const dropIndexSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
-  index: z.union([z.string(), z.record(z.unknown())]).describe('Index name or index specification document to drop'),
+  index: z.union([z.string(), z.record(z.string(), z.unknown())]).describe('Index name or index specification document to drop'),
 });
 
 export type DropIndexParams = z.infer<typeof dropIndexSchema>;
