@@ -5,13 +5,16 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { generateTempFilePath } from '../utils/streaming.js';
 import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
+import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
+
+const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
 
 const collectionSchemaSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
   sampleSize: z.number().optional().default(50).describe('Number of documents to sample for schema inference'),
-  saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
-  filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
+  saveToFile: saveToFileFragment,
+  filePath: filePathFragment,
 });
 
 export type CollectionSchemaParams = z.infer<typeof collectionSchemaSchema>;

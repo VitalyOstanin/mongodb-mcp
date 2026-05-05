@@ -8,6 +8,7 @@ import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import { generateTempFilePath } from '../utils/streaming.js';
 import { streamMongoCursorToFile, streamMongoCursorToFileAsArray } from '../utils/mongodb-stream.js';
+import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 
 const findSchema = z.object({
   database: z.string().describe('Database name'),
@@ -16,9 +17,7 @@ const findSchema = z.object({
   limit: z.number().optional().describe('The maximum number of documents to return'),
   projection: z.record(z.unknown()).optional().describe('The projection, matching the syntax of projection argument of db.collection.find()'),
   sort: z.record(z.unknown()).optional().describe('A document, describing the sort order, matching the syntax of sort argument of cursor.sort()'),
-  saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
-  filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
-  format: z.enum(['jsonl', 'json']).optional().default('jsonl').describe('Output format when saving to file: jsonl (JSON Lines) or json (JSON array format)'),
+  ...saveToFileSchemaFragment,
 });
 
 export type FindParams = z.infer<typeof findSchema>;

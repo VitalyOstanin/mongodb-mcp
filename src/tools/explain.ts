@@ -5,6 +5,11 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import { generateTempFilePath } from '../utils/streaming.js';
+import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
+
+// explain saves a single JSON object, not a stream of documents, so the
+// jsonl/json `format` switch is not relevant. Only saveToFile + filePath apply.
+const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
 
 const explainSchema = z.object({
   database: z.string().describe('Database name'),
@@ -15,8 +20,8 @@ const explainSchema = z.object({
   }).describe('The method and its arguments to run'),
   verbosity: z.enum(['queryPlanner', 'queryPlannerExtended', 'executionStats', 'allPlansExecution']).optional().default('queryPlanner')
     .describe('The verbosity of the explain plan, defaults to queryPlanner. If the user wants to know how fast is a query in execution time, use executionStats.'),
-  saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
-  filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it does not exist.'),
+  saveToFile: saveToFileFragment,
+  filePath: filePathFragment,
 });
 
 export type ExplainParams = z.infer<typeof explainSchema>;

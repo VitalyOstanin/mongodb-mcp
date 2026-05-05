@@ -5,13 +5,16 @@ import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import { generateTempFilePath } from '../utils/streaming.js';
+import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
+
+const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
 
 const mongodbLogsSchema = z.object({
   limit: z.number().optional().default(50).describe('The maximum number of log entries to return.'),
   type: z.enum(['global', 'startupWarnings']).optional().default('global')
     .describe('The type of logs to return. Global returns all recent log entries, while startupWarnings returns only warnings and errors from when the process started.'),
-  saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
-  filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
+  saveToFile: saveToFileFragment,
+  filePath: filePathFragment,
 });
 
 export type MongodbLogsParams = z.infer<typeof mongodbLogsSchema>;
@@ -66,8 +69,8 @@ export function registerMongodbLogsTool(server: McpServer, client: MongoDBClient
             savedToFile: true,
             filePath,
             total: logs.length,
-            limit: params.limit,
-            type: params.type,
+            limit,
+            type,
           });
         }
 

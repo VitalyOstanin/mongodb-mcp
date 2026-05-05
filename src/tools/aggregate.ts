@@ -6,15 +6,15 @@ import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import { generateTempFilePath } from '../utils/streaming.js';
 import { streamMongoCursorToFile, streamMongoCursorToFileAsArray } from '../utils/mongodb-stream.js';
+import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
+import { findDangerousStage } from '../utils/aggregation-safety.js';
 
 const aggregateSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
   pipeline: z.array(z.record(z.unknown())).describe('An array of aggregation stages to execute'),
   noLimit: z.boolean().optional().describe('Disable the automatic $limit stage appended to the pipeline. Useful for pipelines ending with $out or $merge.'),
-  saveToFile: z.boolean().optional().describe('Save results to a file instead of returning them directly. Useful for large datasets that can be analyzed by scripts.'),
-  filePath: z.string().optional().describe('Explicit path to save the file (optional, auto-generated if not provided). Directory will be created if it doesn\'t exist.'),
-  format: z.enum(['jsonl', 'json']).optional().default('jsonl').describe('Output format when saving to file: jsonl (JSON Lines) or json (JSON array format)'),
+  ...saveToFileSchemaFragment,
 });
 
 export type AggregateParams = z.infer<typeof aggregateSchema>;
@@ -45,14 +45,10 @@ export function registerAggregateTool(server: McpServer, client: MongoDBClient) 
 
         // Check if pipeline contains dangerous operations in read-only mode
         if (client.isReadonly()) {
-          const dangerousStages = ['$out', '$merge'];
+          const dangerous = findDangerousStage(pipeline);
 
-          for (const stage of pipeline) {
-            const stageName = Object.keys(stage)[0];
-
-            if (stageName && dangerousStages.includes(stageName)) {
-              return toolError(new Error(`Aggregation stage '${stageName}' is not allowed in read-only mode`));
-            }
+          if (dangerous) {
+            return toolError(new Error(`Aggregation stage '${dangerous}' is not allowed in read-only mode`));
           }
         }
 
