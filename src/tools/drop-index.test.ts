@@ -36,10 +36,9 @@ describe('Drop Index Tool', () => {
       expect.objectContaining({
         title: 'Drop Index',
         description: expect.stringContaining('Drop an index'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );

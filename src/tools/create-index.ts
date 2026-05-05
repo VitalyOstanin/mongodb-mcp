@@ -20,8 +20,10 @@ export function registerCreateIndexTool(server: McpServer, client: MongoDBClient
       description: 'Create an index on a MongoDB collection. Use for: Improving query performance by creating indexes on collection fields.',
       inputSchema: createIndexSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async (params: CreateIndexParams) => {

@@ -18,8 +18,10 @@ export function registerDropCollectionTool(server: McpServer, client: MongoDBCli
       description: 'Drop a collection from a MongoDB database. Use for: Removing collections that are no longer needed.',
       inputSchema: dropCollectionSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async (params: DropCollectionParams) => {

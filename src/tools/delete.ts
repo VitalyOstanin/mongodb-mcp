@@ -20,8 +20,10 @@ export function registerDeleteTool(server: McpServer, client: MongoDBClient) {
       description: 'Delete one or multiple documents from a MongoDB collection. Use for: Removing records from MongoDB collections.',
       inputSchema: deleteSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async (params: DeleteParams) => {

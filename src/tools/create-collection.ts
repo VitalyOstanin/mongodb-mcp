@@ -19,8 +19,10 @@ export function registerCreateCollectionTool(server: McpServer, client: MongoDBC
       description: 'Create a new collection in a MongoDB database. Use for: Creating new collections with optional configuration.',
       inputSchema: createCollectionSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async (params: CreateCollectionParams) => {

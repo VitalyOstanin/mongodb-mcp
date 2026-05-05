@@ -20,8 +20,10 @@ export function registerInsertTool(server: McpServer, client: MongoDBClient) {
       description: 'Insert one or multiple documents into a MongoDB collection. Use for: Adding new records to MongoDB collections.',
       inputSchema: insertSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async (params: InsertParams) => {

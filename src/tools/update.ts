@@ -22,8 +22,10 @@ export function registerUpdateTool(server: McpServer, client: MongoDBClient) {
       description: 'Update one or multiple documents in a MongoDB collection. Use for: Modifying existing records in MongoDB collections.',
       inputSchema: updateSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async (params: UpdateParams) => {

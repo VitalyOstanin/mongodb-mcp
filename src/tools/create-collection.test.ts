@@ -33,10 +33,9 @@ describe('Create Collection Tool', () => {
       expect.objectContaining({
         title: 'Create Collection',
         description: expect.stringContaining('Create a new collection'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );

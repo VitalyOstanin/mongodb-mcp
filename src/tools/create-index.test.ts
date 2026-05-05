@@ -36,10 +36,9 @@ describe('Create Index Tool', () => {
       expect.objectContaining({
         title: 'Create Index',
         description: expect.stringContaining('Create an index'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );

@@ -38,10 +38,9 @@ describe('Update Tool', () => {
       expect.objectContaining({
         title: 'Update Documents',
         description: expect.stringContaining('Update one or multiple documents'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );

@@ -19,8 +19,10 @@ export function registerDropIndexTool(server: McpServer, client: MongoDBClient) 
       description: 'Drop an index from a MongoDB collection. Use for: Removing indexes that are no longer needed or causing performance issues.',
       inputSchema: dropIndexSchema.shape,
       annotations: {
-        writeOperation: true,
-        category: 'write',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async (params: DropIndexParams) => {

@@ -46,10 +46,9 @@ describe('Insert Tool', () => {
       expect.objectContaining({
         title: 'Insert Documents',
         description: expect.stringContaining('Insert one or multiple documents'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );

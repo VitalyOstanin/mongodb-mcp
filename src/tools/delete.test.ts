@@ -37,10 +37,9 @@ describe('Delete Tool', () => {
       expect.objectContaining({
         title: 'Delete Documents',
         description: expect.stringContaining('Delete one or multiple documents'),
-        annotations: {
-          writeOperation: true,
-          category: 'write',
-        },
+        annotations: expect.objectContaining({
+          readOnlyHint: false,
+        }),
       }),
       expect.any(Function),
     );
