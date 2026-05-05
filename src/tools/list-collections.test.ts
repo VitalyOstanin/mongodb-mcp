@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, CollectionInfo } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,34 +6,34 @@ import { registerListCollectionsTool } from './list-collections.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockCollectionInfo: jest.Mocked<CollectionInfo[]> = [
+const mockCollectionInfo: Mocked<CollectionInfo[]> = [
   { name: 'users', type: 'collection' },
   { name: 'products', type: 'collection' },
   { name: 'orders', type: 'collection' },
-] as jest.Mocked<CollectionInfo[]>;
+] as Mocked<CollectionInfo[]>;
 const mockListCollectionsCursor = {
-  toArray: jest.fn(),
+  toArray: vi.fn(),
 };
-const mockDb: jest.Mocked<Db> = {
-  listCollections: jest.fn().mockReturnValue(mockListCollectionsCursor),
-} as unknown as jest.Mocked<Db>;
+const mockDb: Mocked<Db> = {
+  listCollections: vi.fn().mockReturnValue(mockListCollectionsCursor),
+} as unknown as Mocked<Db>;
 
 describe('ListCollections Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the list-collections tool correctly', () => {

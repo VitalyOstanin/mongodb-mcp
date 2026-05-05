@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,26 +6,26 @@ import { registerDbStatsTool } from './db-stats.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockDb: jest.Mocked<Db> = {
-  stats: jest.fn(),
-} as unknown as jest.Mocked<Db>;
+const mockDb: Mocked<Db> = {
+  stats: vi.fn(),
+} as unknown as Mocked<Db>;
 
 describe('DbStats Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the db-stats tool correctly', () => {

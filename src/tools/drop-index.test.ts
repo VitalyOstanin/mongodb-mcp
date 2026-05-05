@@ -1,31 +1,32 @@
+import type { Mocked, Mock } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerDropIndexTool } from './drop-index.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-const mockCollection: jest.Mocked<Collection> = {
-  dropIndex: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  dropIndex: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+} as unknown as Mocked<Db>;
 
 describe('Drop Index Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the drop-index tool with write annotation', () => {
@@ -64,7 +65,7 @@ describe('Drop Index Tool', () => {
 
   it('should drop an index by name', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.dropIndex as jest.Mock).mockResolvedValue({ ok: 1, nIndexesWas: 2 });
+    (mockCollection.dropIndex as Mock).mockResolvedValue({ ok: 1, nIndexesWas: 2 });
 
     registerDropIndexTool(mockServer, mockClient);
 
@@ -93,7 +94,7 @@ describe('Drop Index Tool', () => {
 
   it('should drop an index by specification document', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.dropIndex as jest.Mock).mockResolvedValue({ ok: 1, nIndexesWas: 3 });
+    (mockCollection.dropIndex as Mock).mockResolvedValue({ ok: 1, nIndexesWas: 3 });
 
     registerDropIndexTool(mockServer, mockClient);
 
@@ -120,7 +121,7 @@ describe('Drop Index Tool', () => {
 
   it('should return an error if drop fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.dropIndex as jest.Mock).mockRejectedValue(new Error('IndexNotFound'));
+    (mockCollection.dropIndex as Mock).mockRejectedValue(new Error('IndexNotFound'));
 
     registerDropIndexTool(mockServer, mockClient);
 

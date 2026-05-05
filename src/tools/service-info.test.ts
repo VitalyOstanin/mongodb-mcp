@@ -9,12 +9,12 @@ describe('serviceInfo Tool', () => {
 
   beforeEach(() => {
     mockServer = {
-      registerTool: jest.fn(),
+      registerTool: vi.fn(),
     };
 
     mockClient = {
-      getConnectionInfo: jest.fn(),
-      isReadonly: jest.fn(),
+      getConnectionInfo: vi.fn(),
+      isReadonly: vi.fn(),
     };
   });
 

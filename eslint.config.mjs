@@ -92,4 +92,14 @@ export default [
       }],
     },
   },
+  {
+    // Tests assemble partial mocks via `as unknown as Mocked<T>` casts.
+    // The cast is intentional even when the receiver type is wider, since
+    // dropping it loses the `Mocked<T>` annotation that the rest of the
+    // suite relies on.
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+    },
+  },
 ];

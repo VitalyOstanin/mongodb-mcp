@@ -1,31 +1,32 @@
+import type { Mocked, Mock } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerCreateIndexTool } from './create-index.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-const mockCollection: jest.Mocked<Collection> = {
-  createIndex: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  createIndex: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+} as unknown as Mocked<Db>;
 
 describe('Create Index Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the create-index tool with write annotation', () => {
@@ -64,7 +65,7 @@ describe('Create Index Tool', () => {
 
   it('should create a single-field ascending index', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.createIndex as jest.Mock).mockResolvedValue('name_1');
+    (mockCollection.createIndex as Mock).mockResolvedValue('name_1');
 
     registerCreateIndexTool(mockServer, mockClient);
 
@@ -94,7 +95,7 @@ describe('Create Index Tool', () => {
 
   it('should create an index with unique option', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.createIndex as jest.Mock).mockResolvedValue('email_1');
+    (mockCollection.createIndex as Mock).mockResolvedValue('email_1');
 
     registerCreateIndexTool(mockServer, mockClient);
 
@@ -124,7 +125,7 @@ describe('Create Index Tool', () => {
 
   it('should return an error if index creation fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.createIndex as jest.Mock).mockRejectedValue(new Error('Duplicate key'));
+    (mockCollection.createIndex as Mock).mockRejectedValue(new Error('Duplicate key'));
 
     registerCreateIndexTool(mockServer, mockClient);
 

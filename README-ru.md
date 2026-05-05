@@ -151,10 +151,10 @@ npm install
 | `npm run typecheck:tests` | Проверка типов с дополнительными строгими флагами (`tsconfig.test.json`)        |
 | `npm run lint`            | Запуск ESLint                                                           |
 | `npm run lint:fix`        | Запуск ESLint с `--fix`                                                 |
-| `npm test`                | Запуск Jest-тестов                                                      |
-| `npm run test:watch`      | Запуск Jest в watch-режиме                                              |
-| `npm run test:coverage`   | Запуск Jest с coverage (opt-in; порог coverage обязателен)              |
-| `npm run test:debug`      | Запуск Jest с `--detectOpenHandles --runInBand`                         |
+| `npm test`                | Однократный прогон Vitest                                               |
+| `npm run test:watch`      | Запуск Vitest в watch-режиме                                            |
+| `npm run test:coverage`   | Запуск Vitest с v8 coverage (opt-in; порог coverage обязателен)         |
+| `npm run test:debug`      | Последовательный запуск Vitest (`--no-file-parallelism`)                |
 
 Пример локального подключения:
 

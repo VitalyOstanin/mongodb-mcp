@@ -1,18 +1,19 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerConnectTool } from './connect.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock the MongoDBClient to prevent actual connections
-const mockConnectFn = jest.fn();
-const mockGetConnectionInfoFn = jest.fn();
-const mockGetConnectionStringFn = jest.fn();
-const mockIsReadonlyFn = jest.fn();
+const mockConnectFn = vi.fn();
+const mockGetConnectionInfoFn = vi.fn();
+const mockGetConnectionStringFn = vi.fn();
+const mockIsReadonlyFn = vi.fn();
 
-jest.mock('../mongodb-client.js', () => {
+vi.mock('../mongodb-client.js', () => {
   return {
     MongoDBClient: {
-      getInstance: jest.fn(() => ({
+      getInstance: vi.fn(() => ({
         connect: mockConnectFn,
         getConnectionInfo: mockGetConnectionInfoFn,
         getConnectionString: mockGetConnectionStringFn,
@@ -26,25 +27,25 @@ jest.mock('../mongodb-client.js', () => {
 const originalEnv = process.env;
 
 describe('Connect Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Restore original environment
     process.env = { ...originalEnv };
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
       connect: mockConnectFn,
       getConnectionInfo: mockGetConnectionInfoFn,
       getConnectionString: mockGetConnectionStringFn,
       isReadonly: mockIsReadonlyFn,
-    } as unknown as jest.Mocked<MongoDBClient>;
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   afterEach(() => {

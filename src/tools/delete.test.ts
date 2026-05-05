@@ -1,32 +1,33 @@
+import type { Mocked, Mock } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerDeleteTool } from './delete.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-const mockCollection: jest.Mocked<Collection> = {
-  deleteOne: jest.fn(),
-  deleteMany: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  deleteOne: vi.fn(),
+  deleteMany: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+} as unknown as Mocked<Db>;
 
 describe('Delete Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the delete tool with write annotation', () => {
@@ -66,7 +67,7 @@ describe('Delete Tool', () => {
 
   it('should call deleteOne by default', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.deleteOne as jest.Mock).mockResolvedValue({ acknowledged: true, deletedCount: 1 });
+    (mockCollection.deleteOne as Mock).mockResolvedValue({ acknowledged: true, deletedCount: 1 });
 
     registerDeleteTool(mockServer, mockClient);
 
@@ -96,7 +97,7 @@ describe('Delete Tool', () => {
 
   it('should call deleteMany when multi=true', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.deleteMany as jest.Mock).mockResolvedValue({ acknowledged: true, deletedCount: 5 });
+    (mockCollection.deleteMany as Mock).mockResolvedValue({ acknowledged: true, deletedCount: 5 });
 
     registerDeleteTool(mockServer, mockClient);
 
@@ -125,7 +126,7 @@ describe('Delete Tool', () => {
 
   it('should return an error if delete fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockCollection.deleteOne as jest.Mock).mockRejectedValue(new Error('WriteConcernError'));
+    (mockCollection.deleteOne as Mock).mockRejectedValue(new Error('WriteConcernError'));
 
     registerDeleteTool(mockServer, mockClient);
 

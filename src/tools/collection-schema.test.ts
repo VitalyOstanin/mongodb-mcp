@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ObjectId, type Db, type Collection, type FindCursor } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,33 +6,33 @@ import { registerCollectionSchemaTool, inferSchema } from './collection-schema.j
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockFindCursor: jest.Mocked<FindCursor> = {
-  limit: jest.fn().mockReturnThis(),
-  toArray: jest.fn(),
-} as unknown as jest.Mocked<FindCursor>;
-const mockCollection: jest.Mocked<Collection> = {
-  find: jest.fn().mockReturnValue(mockFindCursor),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+const mockFindCursor: Mocked<FindCursor> = {
+  limit: vi.fn().mockReturnThis(),
+  toArray: vi.fn(),
+} as unknown as Mocked<FindCursor>;
+const mockCollection: Mocked<Collection> = {
+  find: vi.fn().mockReturnValue(mockFindCursor),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+} as unknown as Mocked<Db>;
 
 describe('CollectionSchema Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the collection-schema tool correctly', () => {

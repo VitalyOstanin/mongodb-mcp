@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoClient, Db, Admin } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,33 +6,33 @@ import { registerCollectionStorageSizeTool } from './collection-storage-size.js'
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockAdmin: jest.Mocked<Admin> = {
-  command: jest.fn(),
-} as unknown as jest.Mocked<Admin>;
-const mockDb: jest.Mocked<Db> = {
-  admin: jest.fn().mockReturnValue(mockAdmin),
-} as unknown as jest.Mocked<Db>;
-const mockMongoClient: jest.Mocked<MongoClient> = {
-  db: jest.fn().mockReturnValue(mockDb),
-} as unknown as jest.Mocked<MongoClient>;
+const mockAdmin: Mocked<Admin> = {
+  command: vi.fn(),
+} as unknown as Mocked<Admin>;
+const mockDb: Mocked<Db> = {
+  admin: vi.fn().mockReturnValue(mockAdmin),
+} as unknown as Mocked<Db>;
+const mockMongoClient: Mocked<MongoClient> = {
+  db: vi.fn().mockReturnValue(mockDb),
+} as unknown as Mocked<MongoClient>;
 
 describe('CollectionStorageSize Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-      getClient: jest.fn().mockReturnValue(mockMongoClient),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+      getClient: vi.fn().mockReturnValue(mockMongoClient),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the collection-storage-size tool correctly', () => {

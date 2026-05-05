@@ -45,10 +45,10 @@ Optional: copy `.env.example` to `.env` if/when you maintain a local one. `.env`
 | `npm run typecheck:tests` | Type-check with extra strict flags (`tsconfig.test.json`)        |
 | `npm run lint`            | Run ESLint                                                       |
 | `npm run lint:fix`        | Run ESLint with `--fix`                                          |
-| `npm test`                | Run the Jest test suite                                          |
-| `npm run test:watch`      | Run Jest in watch mode                                           |
-| `npm run test:coverage`   | Run Jest with coverage (opt-in; threshold gate enforced)         |
-| `npm run test:debug`      | Run Jest with `--detectOpenHandles --runInBand`                  |
+| `npm test`                | Run the Vitest test suite once                                   |
+| `npm run test:watch`      | Run Vitest in watch mode                                         |
+| `npm run test:coverage`   | Run Vitest with v8 coverage (opt-in; threshold gate enforced)    |
+| `npm run test:debug`      | Run Vitest sequentially (`--no-file-parallelism`)                |
 
 Editor settings are pinned via [`.editorconfig`](.editorconfig). Most editors pick this up automatically.
 
@@ -69,7 +69,7 @@ If you touched code that affects coverage, also run `npm run test:coverage` and 
 ## Coding Style
 
 - TypeScript strict mode is enforced via `tsconfig.base.json` (`strict: true`). Additional strict flags live in `tsconfig.test.json`.
-- ESM is used end-to-end (`"type": "module"`). Imports keep the `.js` extension at runtime; `tsc` and `ts-jest` resolve them to `.ts`.
+- ESM is used end-to-end (`"type": "module"`). Imports keep the `.js` extension at runtime; `tsc` and Vitest (via Vite) resolve them to `.ts`.
 - ESLint config (`eslint.config.mjs`) enforces:
   - `prefer-template`, `prefer-const`, `no-var`, `prefer-destructuring` (object-only).
   - `padding-line-between-statements` for blank lines around `return` and variable declarations.

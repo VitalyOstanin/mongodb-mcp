@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { loadConfig } from '../config';
 import type { MongoDBClient } from '../mongodb-client';
 import { registerServiceInfoTool } from '../tools/service-info';
@@ -42,18 +43,18 @@ describe('Config and Service Info Tests', () => {
   });
 
   describe('service-info tool response', () => {
-    let mockServer: jest.Mocked<McpServer>;
-    let mockClient: jest.Mocked<MongoDBClient>;
+    let mockServer: Mocked<McpServer>;
+    let mockClient: Mocked<MongoDBClient>;
 
     beforeEach(() => {
       mockServer = {
-        registerTool: jest.fn(),
-      } as unknown as jest.Mocked<McpServer>;
+        registerTool: vi.fn(),
+      } as unknown as Mocked<McpServer>;
 
       mockClient = {
-        getConnectionInfo: jest.fn(),
-        isReadonly: jest.fn(),
-      } as unknown as jest.Mocked<MongoDBClient>;
+        getConnectionInfo: vi.fn(),
+        isReadonly: vi.fn(),
+      } as unknown as Mocked<MongoDBClient>;
     });
 
     it('should return correct connection status', async () => {

@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,36 +6,36 @@ import { registerAggregateTool } from './aggregate.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock the streaming functions to avoid actual file operations
-jest.mock('../utils/mongodb-stream.js', () => ({
-  streamMongoCursorToFile: jest.fn().mockResolvedValue(7), // Mock to return 7 documents processed
-  streamMongoCursorToFileAsArray: jest.fn().mockResolvedValue(4), // Mock to return 4 documents processed
+vi.mock('../utils/mongodb-stream.js', () => ({
+  streamMongoCursorToFile: vi.fn().mockResolvedValue(7), // Mock to return 7 documents processed
+  streamMongoCursorToFileAsArray: vi.fn().mockResolvedValue(4), // Mock to return 4 documents processed
 }));
 
 // Mock objects for testing
-const mockCollection: jest.Mocked<Collection> = {
-  aggregate: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-  aggregate: jest.fn(),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  aggregate: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+  aggregate: vi.fn(),
+} as unknown as Mocked<Db>;
 
 describe('Aggregate Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the aggregate tool correctly', () => {
@@ -288,20 +289,20 @@ describe('Aggregate Tool', () => {
 
     const mockAggregateResult = {
       // Mock the async iterator for the aggregation cursor
-      [Symbol.asyncIterator]: jest.fn().mockImplementation(function*() {
+      [Symbol.asyncIterator]: vi.fn().mockImplementation(function*() {
         yield { _id: 1, name: 'test1' };
         yield { _id: 2, name: 'test2' };
       }),
     };
     const mockCollection = {
-      find: jest.fn(),
-      aggregate: jest.fn().mockReturnValue(mockAggregateResult),
-      countDocuments: jest.fn(),
+      find: vi.fn(),
+      aggregate: vi.fn().mockReturnValue(mockAggregateResult),
+      countDocuments: vi.fn(),
     };
 
     // Using 'any' for mocking database object because the exact type is complex to define
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
+    mockClient.getDatabase.mockReturnValue({ collection: vi.fn().mockReturnValue(mockCollection) } as any);
 
     registerAggregateTool(mockServer, mockClient);
 
@@ -342,20 +343,20 @@ describe('Aggregate Tool', () => {
 
     const mockAggregateResult = {
       // Mock the async iterator for the aggregation cursor
-      [Symbol.asyncIterator]: jest.fn().mockImplementation(function*() {
+      [Symbol.asyncIterator]: vi.fn().mockImplementation(function*() {
         yield { _id: 1, name: 'test1' };
         yield { _id: 2, name: 'test2' };
       }),
     };
     const mockCollection = {
-      find: jest.fn(),
-      aggregate: jest.fn().mockReturnValue(mockAggregateResult),
-      countDocuments: jest.fn(),
+      find: vi.fn(),
+      aggregate: vi.fn().mockReturnValue(mockAggregateResult),
+      countDocuments: vi.fn(),
     };
 
     // Using 'any' for mocking database object because the exact type is complex to define
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockClient.getDatabase.mockReturnValue({ collection: jest.fn().mockReturnValue(mockCollection) } as any);
+    mockClient.getDatabase.mockReturnValue({ collection: vi.fn().mockReturnValue(mockCollection) } as any);
 
     registerAggregateTool(mockServer, mockClient);
 

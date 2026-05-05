@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection, FindCursor } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,38 +6,38 @@ import { registerFindTool } from './find.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock the streaming functions to avoid actual file operations
-jest.mock('../utils/mongodb-stream.js', () => ({
-  streamMongoCursorToFile: jest.fn().mockResolvedValue(5), // Mock to return 5 documents processed
-  streamMongoCursorToFileAsArray: jest.fn().mockResolvedValue(3), // Mock to return 3 documents processed
+vi.mock('../utils/mongodb-stream.js', () => ({
+  streamMongoCursorToFile: vi.fn().mockResolvedValue(5), // Mock to return 5 documents processed
+  streamMongoCursorToFileAsArray: vi.fn().mockResolvedValue(3), // Mock to return 3 documents processed
 }));
 
 // Define base mock objects that can be reset for each test
 const createBaseMocks = () => {
-  const mockFindCursor: jest.Mocked<FindCursor> = {
-    limit: jest.fn().mockReturnThis(),
-    project: jest.fn().mockReturnThis(),
-    sort: jest.fn().mockReturnThis(),
-    toArray: jest.fn(),
-  } as unknown as jest.Mocked<FindCursor>;
-  const mockCollection: jest.Mocked<Collection> = {
-    find: jest.fn().mockReturnValue(mockFindCursor),
-  } as unknown as jest.Mocked<Collection>;
-  const mockDb: jest.Mocked<Db> = {
-    collection: jest.fn().mockReturnValue(mockCollection),
-  } as unknown as jest.Mocked<Db>;
+  const mockFindCursor: Mocked<FindCursor> = {
+    limit: vi.fn().mockReturnThis(),
+    project: vi.fn().mockReturnThis(),
+    sort: vi.fn().mockReturnThis(),
+    toArray: vi.fn(),
+  } as unknown as Mocked<FindCursor>;
+  const mockCollection: Mocked<Collection> = {
+    find: vi.fn().mockReturnValue(mockFindCursor),
+  } as unknown as Mocked<Collection>;
+  const mockDb: Mocked<Db> = {
+    collection: vi.fn().mockReturnValue(mockCollection),
+  } as unknown as Mocked<Db>;
 
   return { mockFindCursor, mockCollection, mockDb };
 };
 
 describe('Find Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
-  let mockFindCursor: jest.Mocked<FindCursor>;
-  let mockCollection: jest.Mocked<Collection>;
-  let mockDb: jest.Mocked<Db>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
+  let mockFindCursor: Mocked<FindCursor>;
+  let mockCollection: Mocked<Collection>;
+  let mockDb: Mocked<Db>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const mocks = createBaseMocks();
 
@@ -45,14 +46,14 @@ describe('Find Tool', () => {
     mockDb = mocks.mockDb;
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the find tool correctly', () => {
@@ -252,17 +253,17 @@ describe('Find Tool', () => {
 
     // Mock the cursor with all required methods for both streaming and normal operations
     const mockCursor = {
-      [Symbol.asyncIterator]: jest.fn().mockImplementation(async function*() {
+      [Symbol.asyncIterator]: vi.fn().mockImplementation(async function*() {
         yield { _id: 1, name: 'test' };
       }),
-      limit: jest.fn().mockReturnThis(),
-      project: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn().mockResolvedValue([{ _id: 1, name: 'test' }]), // Add toArray method
+      limit: vi.fn().mockReturnThis(),
+      project: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([{ _id: 1, name: 'test' }]), // Add toArray method
     };
     const mockCollection = {
-      find: jest.fn().mockReturnValue(mockCursor),
-    } as unknown as jest.Mocked<Collection>;
+      find: vi.fn().mockReturnValue(mockCursor),
+    } as unknown as Mocked<Collection>;
 
     mockDb.collection.mockReturnValue(mockCollection);
 
@@ -307,17 +308,17 @@ describe('Find Tool', () => {
 
     // Mock the cursor with all required methods for both streaming and normal operations
     const mockCursor = {
-      [Symbol.asyncIterator]: jest.fn().mockImplementation(async function*() {
+      [Symbol.asyncIterator]: vi.fn().mockImplementation(async function*() {
         yield { _id: 1, name: 'test' };
       }),
-      limit: jest.fn().mockReturnThis(),
-      project: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn().mockResolvedValue([{ _id: 1, name: 'test' }]), // Add toArray method
+      limit: vi.fn().mockReturnThis(),
+      project: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([{ _id: 1, name: 'test' }]), // Add toArray method
     };
     const mockCollection = {
-      find: jest.fn().mockReturnValue(mockCursor),
-    } as unknown as jest.Mocked<Collection>;
+      find: vi.fn().mockReturnValue(mockCursor),
+    } as unknown as Mocked<Collection>;
 
     mockDb.collection.mockReturnValue(mockCollection);
 
@@ -362,19 +363,19 @@ describe('Find Tool', () => {
 
     // Mock the cursor with all required methods for both streaming and normal operations
     const mockCursor = {
-      [Symbol.asyncIterator]: jest.fn().mockImplementation(async function*() {
+      [Symbol.asyncIterator]: vi.fn().mockImplementation(async function*() {
         yield { _id: 1, name: 'test1' };
         yield { _id: 2, name: 'test2' };
         yield { _id: 3, name: 'test3' };
       }),
-      limit: jest.fn().mockReturnThis(), // This should not be called when no limit is provided
-      project: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn().mockResolvedValue([{ _id: 1, name: 'test1' }, { _id: 2, name: 'test2' }, { _id: 3, name: 'test3' }]), // Add toArray method
+      limit: vi.fn().mockReturnThis(), // This should not be called when no limit is provided
+      project: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([{ _id: 1, name: 'test1' }, { _id: 2, name: 'test2' }, { _id: 3, name: 'test3' }]), // Add toArray method
     };
     const mockCollection = {
-      find: jest.fn().mockReturnValue(mockCursor),
-    } as unknown as jest.Mocked<Collection>;
+      find: vi.fn().mockReturnValue(mockCursor),
+    } as unknown as Mocked<Collection>;
 
     mockDb.collection.mockReturnValue(mockCollection);
 
@@ -420,7 +421,7 @@ describe('Find Tool', () => {
   it('should return an error if finding fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
-    const findSpy = jest.spyOn(mockCollection, 'find').mockImplementation(() => {
+    const findSpy = vi.spyOn(mockCollection, 'find').mockImplementation(() => {
       throw new Error('Find failed');
     });
 

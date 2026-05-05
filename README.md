@@ -151,10 +151,10 @@ Common scripts:
 | `npm run typecheck:tests` | Type-check with extra strict flags (`tsconfig.test.json`)      |
 | `npm run lint`          | Run ESLint                                                       |
 | `npm run lint:fix`      | Run ESLint with `--fix`                                          |
-| `npm test`              | Run the Jest test suite                                          |
-| `npm run test:watch`    | Run Jest in watch mode                                           |
-| `npm run test:coverage` | Run Jest with coverage (opt-in; threshold gate enforced)         |
-| `npm run test:debug`    | Run Jest with `--detectOpenHandles --runInBand`                  |
+| `npm test`              | Run the Vitest test suite once                                   |
+| `npm run test:watch`    | Run Vitest in watch mode                                         |
+| `npm run test:coverage` | Run Vitest with v8 coverage (opt-in; threshold gate enforced)    |
+| `npm run test:debug`    | Run Vitest sequentially (`--no-file-parallelism`)                |
 
 Local connection example:
 

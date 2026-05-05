@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection, ObjectId } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,13 +6,13 @@ import { registerInsertTool } from './insert.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockCollection: jest.Mocked<Collection> = {
-  insertOne: jest.fn(),
-  insertMany: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  insertOne: vi.fn(),
+  insertMany: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+} as unknown as Mocked<Db>;
 // Create mock ObjectId instances
 const createMockObjectId = (id: string): ObjectId => {
   return {
@@ -22,20 +23,20 @@ const createMockObjectId = (id: string): ObjectId => {
 };
 
 describe('Insert Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the insert tool correctly', () => {

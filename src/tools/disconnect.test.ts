@@ -9,12 +9,12 @@ describe('disconnectTool', () => {
 
   beforeEach(() => {
     mockServer = {
-      registerTool: jest.fn(),
+      registerTool: vi.fn(),
     };
 
     mockClient = {
-      getConnectionInfo: jest.fn(),
-      disconnect: jest.fn(),
+      getConnectionInfo: vi.fn(),
+      disconnect: vi.fn(),
     };
   });
 
@@ -33,7 +33,7 @@ describe('disconnectTool', () => {
 
   it('should disconnect successfully when connected', async () => {
     // Get the registered implementation function
-    const mockRegisterTool = jest.fn();
+    const mockRegisterTool = vi.fn();
 
     // Using 'any' for mock server object that mimics the McpServer interface for testing purposes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +62,7 @@ describe('disconnectTool', () => {
 
   it('should return already disconnected message when not connected', async () => {
     // Get the registered implementation function
-    const mockRegisterTool = jest.fn();
+    const mockRegisterTool = vi.fn();
 
     // Using 'any' for mock server object that mimics the McpServer interface for testing purposes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,7 +94,7 @@ describe('disconnectTool', () => {
 
   it('should handle disconnect with no previous disconnect reason', async () => {
     // Get the registered implementation function
-    const mockRegisterTool = jest.fn();
+    const mockRegisterTool = vi.fn();
 
     // Using 'any' for mock server object that mimics the McpServer interface for testing purposes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

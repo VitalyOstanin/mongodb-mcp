@@ -1,3 +1,4 @@
+import type { Mocked, Mock } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection, FindCursor } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
@@ -5,43 +6,43 @@ import { registerExplainTool } from './explain.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
-const mockFindCursor: jest.Mocked<FindCursor> = {
-  project: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(),
-  explain: jest.fn(),
-} as unknown as jest.Mocked<FindCursor>;
+const mockFindCursor: Mocked<FindCursor> = {
+  project: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  sort: vi.fn().mockReturnThis(),
+  explain: vi.fn(),
+} as unknown as Mocked<FindCursor>;
 // Using 'any' because the mock aggregate cursor has a complex type structure that's difficult to type exactly
 // for testing purposes, and the important part is that it implements the explain method
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockAggregateCursor: any = {
-  explain: jest.fn(),
+  explain: vi.fn(),
 };
-const mockCollection: jest.Mocked<Collection> = {
-  find: jest.fn().mockReturnValue(mockFindCursor),
-  aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-  command: jest.fn(),
-} as unknown as jest.Mocked<Db>;
+const mockCollection: Mocked<Collection> = {
+  find: vi.fn().mockReturnValue(mockFindCursor),
+  aggregate: vi.fn().mockReturnValue(mockAggregateCursor),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+  command: vi.fn(),
+} as unknown as Mocked<Db>;
 
 describe('Explain Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-      isReadonly: jest.fn().mockReturnValue(false), // Default to non-read-only mode
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+      isReadonly: vi.fn().mockReturnValue(false), // Default to non-read-only mode
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the explain tool correctly', () => {
@@ -181,7 +182,7 @@ describe('Explain Tool', () => {
 
     const mockExplainResult = { queryPlanner: { plannerVersion: 1, namespace: 'testdb.testcollection' } };
 
-    (mockDb.command as jest.Mock).mockResolvedValue(mockExplainResult);
+    (mockDb.command as Mock).mockResolvedValue(mockExplainResult);
 
     registerExplainTool(mockServer, mockClient);
 

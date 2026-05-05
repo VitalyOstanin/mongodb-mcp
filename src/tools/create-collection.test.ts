@@ -1,28 +1,29 @@
+import type { Mocked, Mock } from 'vitest';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerCreateCollectionTool } from './create-collection.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-const mockDb: jest.Mocked<Db> = {
-  createCollection: jest.fn(),
-} as unknown as jest.Mocked<Db>;
+const mockDb: Mocked<Db> = {
+  createCollection: vi.fn(),
+} as unknown as Mocked<Db>;
 
 describe('Create Collection Tool', () => {
-  let mockServer: jest.Mocked<McpServer>;
-  let mockClient: jest.Mocked<MongoDBClient>;
+  let mockServer: Mocked<McpServer>;
+  let mockClient: Mocked<MongoDBClient>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockServer = {
-      registerTool: jest.fn(),
-    } as unknown as jest.Mocked<McpServer>;
+      registerTool: vi.fn(),
+    } as unknown as Mocked<McpServer>;
 
     mockClient = {
-      isConnectedToMongoDB: jest.fn(),
-      getDatabase: jest.fn().mockReturnValue(mockDb),
-    } as unknown as jest.Mocked<MongoDBClient>;
+      isConnectedToMongoDB: vi.fn(),
+      getDatabase: vi.fn().mockReturnValue(mockDb),
+    } as unknown as Mocked<MongoDBClient>;
   });
 
   it('should register the create-collection tool with write annotation', () => {
@@ -60,7 +61,7 @@ describe('Create Collection Tool', () => {
 
   it('should create a collection without options', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockDb.createCollection as jest.Mock).mockResolvedValue({ collectionName: 'testcollection' });
+    (mockDb.createCollection as Mock).mockResolvedValue({ collectionName: 'testcollection' });
 
     registerCreateCollectionTool(mockServer, mockClient);
 
@@ -86,7 +87,7 @@ describe('Create Collection Tool', () => {
 
   it('should create a collection with options (capped)', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockDb.createCollection as jest.Mock).mockResolvedValue({ collectionName: 'logs' });
+    (mockDb.createCollection as Mock).mockResolvedValue({ collectionName: 'logs' });
 
     registerCreateCollectionTool(mockServer, mockClient);
 
@@ -113,7 +114,7 @@ describe('Create Collection Tool', () => {
 
   it('should return an error if creation fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
-    (mockDb.createCollection as jest.Mock).mockRejectedValue(new Error('NamespaceExists'));
+    (mockDb.createCollection as Mock).mockRejectedValue(new Error('NamespaceExists'));
 
     registerCreateCollectionTool(mockServer, mockClient);
 
