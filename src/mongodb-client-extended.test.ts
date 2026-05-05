@@ -28,6 +28,7 @@ const mockMongoClient = {
   db: jest.fn().mockReturnValue(mockDb),
   close: jest.fn().mockResolvedValue(undefined),
   on: jest.fn().mockReturnThis(),
+  removeAllListeners: jest.fn().mockReturnThis(),
   topology: {
     isConnected: jest.fn().mockReturnValue(true),
   },

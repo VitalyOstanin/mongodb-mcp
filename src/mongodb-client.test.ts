@@ -385,7 +385,7 @@ describe('MongoDBClient', () => {
   });
 
   describe('Aggregation pipeline validation', () => {
-    const dangerousStages = ['$out', '$merge'];
+    const dangerousStages = ['$out', '$merge', '$function', '$accumulator'];
     const safeStages = [
       '$match', '$project', '$group', '$sort', '$limit', '$skip',
       '$unwind', '$lookup', '$addFields', '$set', '$unset', '$replaceRoot',
@@ -399,9 +399,16 @@ describe('MongoDBClient', () => {
     test.each(dangerousStages)('should block aggregation with dangerous stage %s', (stage) => {
       const db = client.getDatabase('test');
       const collection = db.collection('users');
+      const stageValue: Record<string, unknown> = stage === '$out'
+        ? { $out: 'output_collection' }
+        : stage === '$merge'
+          ? { $merge: { into: 'target_collection' } }
+          : stage === '$function'
+            ? { $addFields: { x: { $function: { body: 'function(){return 1}', args: [], lang: 'js' } } } }
+            : { $group: { _id: null, total: { $accumulator: { init: 'function(){return 0}', accumulate: 'function(s,v){return s+v}', merge: 'function(a,b){return a+b}', lang: 'js' } } } };
       const pipeline = [
         { $match: { status: 'active' } },
-        { [stage]: stage === '$out' ? 'output_collection' : { into: 'target_collection' } },
+        stageValue,
       ];
 
       expect(() => {

@@ -1,4 +1,30 @@
 import { MongoClient, type MongoClientOptions, type Db, type Collection, type Document } from 'mongodb';
+import { findDangerousStage } from './utils/aggregation-safety.js';
+
+const DB_LEVEL_WRITE_OPERATIONS = new Set([
+  'addUser', 'removeUser', 'createCollection', 'createIndex', 'dropCollection',
+  'dropIndex', 'dropDatabase', 'renameCollection', 'updateOne', 'updateMany',
+  'replaceOne', 'deleteOne', 'deleteMany', 'insertOne', 'insertMany',
+  'findOneAndReplace', 'findOneAndUpdate', 'findOneAndDelete',
+  'bulkWrite',
+]);
+
+const COLLECTION_LEVEL_WRITE_OPERATIONS = new Set([
+  'insertOne', 'insertMany', 'updateOne', 'updateMany',
+  'replaceOne', 'deleteOne', 'deleteMany', 'findOneAndReplace',
+  'findOneAndUpdate', 'findOneAndDelete', 'bulkWrite',
+  'createIndex', 'dropIndex', 'createIndexes', 'dropIndexes',
+  'renameIndex', 'drop', 'initializeOrderedBulkOp', 'initializeUnorderedBulkOp',
+  'insert', 'save', 'update', 'remove',
+]);
+
+function checkAggregatePipeline(pipeline: ReadonlyArray<Record<string, unknown>>): void {
+  const stage = findDangerousStage(pipeline);
+
+  if (stage) {
+    throw new Error(`Aggregation stage '${stage}' is not allowed in read-only mode`);
+  }
+}
 
 export class MongoDBClient {
   private static instance: MongoDBClient;
@@ -8,6 +34,10 @@ export class MongoDBClient {
   private readonlyMode: boolean = false;
   private disconnectReason: string | null = null;
   private connectionError: Error | null = null;
+  // Serialise connect/disconnect against each other and themselves so two
+  // tool calls cannot race on the singleton state.
+  private connectInFlight: Promise<void> | null = null;
+  private disconnectInFlight: Promise<void> | null = null;
 
   private constructor() {}
 
@@ -29,7 +59,19 @@ export class MongoDBClient {
   }
 
   async connect(): Promise<void> {
-    // Only use connection string from environment variable
+    if (this.connectInFlight) {
+      return this.connectInFlight;
+    }
+
+    this.connectInFlight = this.doConnect();
+    try {
+      await this.connectInFlight;
+    } finally {
+      this.connectInFlight = null;
+    }
+  }
+
+  private async doConnect(): Promise<void> {
     const connString = process.env.MONGODB_MCP_CONNECTION_STRING;
 
     if (!connString) {
@@ -37,18 +79,16 @@ export class MongoDBClient {
     }
 
     if (this.isConnected && this.client) {
-      // If already connected, disconnect before new connection
-      await this.disconnect();
+      // Tear down the existing connection before opening a new one. doConnect
+      // bypasses the connect mutex (it is held by the caller), so we go
+      // directly to doDisconnect.
+      await this.doDisconnect('reconnect');
     }
 
     try {
-      this.client = new MongoClient(connString, {
-        // Optionally: connection settings
-      } as MongoClientOptions);
+      this.client = new MongoClient(connString, {} as MongoClientOptions);
 
-      // Add event listeners to detect connection issues
       this.client.on('serverClosed', () => {
-        // Server closed event
         if (this.isConnected) {
           this.isConnected = false;
           this.connectionError = new Error('MongoDB server closed connection');
@@ -57,7 +97,6 @@ export class MongoDBClient {
       });
 
       this.client.on('serverHeartbeatFailed', () => {
-        // Server heartbeat failed, indicates connection issues
         if (this.isConnected) {
           this.connectionError = new Error('MongoDB heartbeat failed - connection lost');
           this.disconnectReason = 'heartbeat failed';
@@ -65,7 +104,6 @@ export class MongoDBClient {
       });
 
       this.client.on('connectionClosed', () => {
-        // Connection closed event
         if (this.isConnected) {
           this.isConnected = false;
           this.connectionError = new Error('MongoDB connection closed');
@@ -74,7 +112,6 @@ export class MongoDBClient {
       });
 
       this.client.on('error', (error) => {
-        // General connection error
         if (this.isConnected) {
           this.isConnected = false;
           this.connectionError = error instanceof Error ? error : new Error(String(error));
@@ -85,8 +122,8 @@ export class MongoDBClient {
       await this.client.connect();
       this.connectionString = connString;
       this.isConnected = true;
-      this.disconnectReason = null; // Clear disconnect reason on successful connection
-      this.connectionError = null; // Clear any previous connection error
+      this.disconnectReason = null;
+      this.connectionError = null;
       // readonlyMode is set only via CLI arg (setReadonlyMode), not on reconnect
     } catch (error) {
       this.connectionError = error instanceof Error ? error : new Error(String(error));
@@ -95,14 +132,32 @@ export class MongoDBClient {
   }
 
   async disconnect(reason: string = "normal disconnect"): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      this.isConnected = false;
-      this.client = null;
-      this.connectionString = null;
-      this.disconnectReason = reason;
-      this.connectionError = null; // Clear any error when disconnecting intentionally
+    if (this.disconnectInFlight) {
+      return this.disconnectInFlight;
     }
+
+    this.disconnectInFlight = this.doDisconnect(reason);
+    try {
+      await this.disconnectInFlight;
+    } finally {
+      this.disconnectInFlight = null;
+    }
+  }
+
+  private async doDisconnect(reason: string): Promise<void> {
+    if (!this.client) {
+      return;
+    }
+
+    // Drop event listeners on the old client before closing it. This avoids
+    // any chance of a stale listener flipping isConnected on a future event.
+    this.client.removeAllListeners();
+    await this.client.close();
+    this.isConnected = false;
+    this.client = null;
+    this.connectionString = null;
+    this.disconnectReason = reason;
+    this.connectionError = null;
   }
 
   private ensureConnected(): void {
@@ -123,7 +178,6 @@ export class MongoDBClient {
 
     const db = this.client!.db(databaseName);
 
-    // If in readonly mode, wrap the database with checks
     if (this.readonlyMode) {
       return this.createReadonlyDatabaseProxy(db);
     }
@@ -131,60 +185,39 @@ export class MongoDBClient {
     return db;
   }
 
-  private createReadonlyDatabaseProxy(db: Db) {
-    // Create a proxy that blocks write operations
+  private createReadonlyDatabaseProxy(db: Db): Db {
+    // Capture `this` so the Proxy handler can call back into class methods
+    // even though `this` inside `get(target, prop)` refers to the handler.
+    const self = this;
+
     return new Proxy(db, {
       get(target, prop: string) {
-        // Check if operation is potentially data modifying
-        const writeOperations = [
-          'addUser', 'removeUser', 'createCollection', 'createIndex', 'dropCollection',
-          'dropIndex', 'dropDatabase', 'renameCollection', 'updateOne', 'updateMany',
-          'replaceOne', 'deleteOne', 'deleteMany', 'insertOne', 'insertMany',
-          'findOneAndReplace', 'findOneAndUpdate', 'findOneAndDelete',
-          'bulkWrite',
-        ];
-
-        if (writeOperations.includes(prop)) {
+        if (DB_LEVEL_WRITE_OPERATIONS.has(prop)) {
           return function() {
             throw new Error(`Operation '${prop}' is not allowed in read-only mode`);
           };
         }
 
-        // Use proper typing with Record for dynamic property access
-        // Converting to 'unknown' first to satisfy TypeScript constraints
         const result = (target as unknown as Record<string, unknown>)[prop];
 
-        // If result is a function, return it
         if (typeof result === 'function') {
           if (prop === 'collection') {
-            // Wrap the collection method to return a readonly collection proxy
             return (...args: Parameters<Db['collection']>) => {
-              const collection = result.apply(target, args);
+              const collection = (result as (...a: unknown[]) => Collection<Document>).apply(target, args);
 
-              return MongoDBClient.prototype.createReadonlyCollectionProxy.call(this, collection);
+              return self.createReadonlyCollectionProxy(collection);
             };
           }
 
           if (prop === 'aggregate') {
-            // For database-level aggregate operations, we need to check the pipeline for dangerous operations
             return function (pipeline: Array<Record<string, unknown>>, options?: Record<string, unknown>) {
-              // Check if the pipeline contains dangerous operations
-              const dangerousStages = ['$out', '$merge'];
+              checkAggregatePipeline(pipeline);
 
-              for (const stage of pipeline) {
-                const stageName = Object.keys(stage)[0];
-
-                if (stageName && dangerousStages.includes(stageName)) {
-                  throw new Error(`Aggregation stage '${stageName}' is not allowed in read-only mode`);
-                }
-              }
-
-              // If no dangerous stages found, call the original aggregate function
-              return result.call(target, pipeline, options);
+              return (result as (...a: unknown[]) => unknown).call(target, pipeline, options);
             };
           }
 
-          return result.bind(target);
+          return (result as (...a: unknown[]) => unknown).bind(target);
         }
 
         return result;
@@ -192,55 +225,27 @@ export class MongoDBClient {
     });
   }
 
-  private createReadonlyCollectionProxy<T extends Document = Document>(collection: Collection<T>) {
-    // Create a proxy for collection that protects write operations
+  private createReadonlyCollectionProxy<T extends Document = Document>(collection: Collection<T>): Collection<T> {
     return new Proxy(collection, {
       get(target, prop: string) {
-        // Check if operation is a write operation
-        const writeOperations = [
-          'insertOne', 'insertMany', 'updateOne', 'updateMany',
-          'replaceOne', 'deleteOne', 'deleteMany', 'findOneAndReplace',
-          'findOneAndUpdate', 'findOneAndDelete', 'bulkWrite',
-          'createIndex', 'dropIndex', 'createIndexes', 'dropIndexes',
-          'renameIndex', 'drop', 'initializeOrderedBulkOp', 'initializeUnorderedBulkOp',
-          'insert', // Legacy insert method
-          'save', // Legacy save method
-          'update', // Legacy update method
-          'remove', // Legacy remove method
-        ];
-
-        if (writeOperations.includes(prop)) {
+        if (COLLECTION_LEVEL_WRITE_OPERATIONS.has(prop)) {
           return function() {
             throw new Error(`Operation '${prop}' is not allowed in read-only mode`);
           };
         }
 
-        // Use proper typing with Record for dynamic property access
-        // Converting to 'unknown' first to satisfy TypeScript constraints
         const result = (target as unknown as Record<string, unknown>)[prop];
 
         if (typeof result === 'function') {
           if (prop === 'aggregate') {
-            // For collection-level aggregate operations, we need to check the pipeline for dangerous operations
             return function (pipeline: Array<Record<string, unknown>>, options?: Record<string, unknown>) {
-              // Check if the pipeline contains dangerous operations
-              const dangerousStages = ['$out', '$merge'];
+              checkAggregatePipeline(pipeline);
 
-              for (const stage of pipeline) {
-                const stageName = Object.keys(stage)[0];
-
-                if (stageName && dangerousStages.includes(stageName)) {
-                  throw new Error(`Aggregation stage '${stageName}' is not allowed in read-only mode`);
-                }
-              }
-
-              // If no dangerous stages found, call the original aggregate function
-              return result.call(target, pipeline, options);
+              return (result as (...a: unknown[]) => unknown).call(target, pipeline, options);
             };
           }
 
-          // For other methods, bind to the target
-          return result.bind(target);
+          return (result as (...a: unknown[]) => unknown).bind(target);
         }
 
         return result;

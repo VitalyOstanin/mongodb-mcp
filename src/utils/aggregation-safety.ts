@@ -1,36 +1,37 @@
-// Aggregation pipeline stages that are blocked when the server runs in
-// read-only mode.
-// - $out / $merge: write the pipeline output to a collection.
-// - $function / $accumulator: execute arbitrary server-side JavaScript,
-//   which can read other collections, run CPU-intensive code, and has
-//   historically had sandbox-escape CVEs in older MongoDB versions.
-// - $where inside `find`/`$match` is enforced separately at the filter level
-//   via findServerSideJsOperator.
-export const DANGEROUS_AGGREGATION_STAGES = [
-  '$out',
-  '$merge',
-  '$function',
-  '$accumulator',
-] as const;
+// Top-level pipeline stages that write data and are blocked in read-only mode.
+const WRITE_PIPELINE_STAGES = ['$out', '$merge'] as const;
 
+// Operators that execute arbitrary server-side JavaScript. They can read other
+// collections, run CPU-intensive code, and have historically had sandbox-escape
+// CVEs in older MongoDB versions. They are not stages on their own --
+// $function and $accumulator are nested inside other stages ($addFields, $group),
+// $where appears inside find filters or $match -- so we must search recursively.
+const SERVER_SIDE_JS_OPERATORS = ['$where', '$function', '$accumulator'] as const;
+
+// Returns the first dangerous element found in `pipeline`, either as a top-level
+// write stage or as a nested server-side JS operator.
 export function findDangerousStage(
   pipeline: ReadonlyArray<Record<string, unknown>>,
 ): string | undefined {
   for (const stage of pipeline) {
     for (const stageName of Object.keys(stage)) {
-      if ((DANGEROUS_AGGREGATION_STAGES as readonly string[]).includes(stageName)) {
+      if ((WRITE_PIPELINE_STAGES as readonly string[]).includes(stageName)) {
         return stageName;
       }
+    }
+
+    const nested = findServerSideJsOperator(stage);
+
+    if (nested) {
+      return nested;
     }
   }
 
   return undefined;
 }
 
-// Recursively look for $where, $function, $accumulator inside a find filter
-// (they can be nested in $and / $or / $nor / $expr).
-const SERVER_SIDE_JS_OPERATORS = ['$where', '$function', '$accumulator'] as const;
-
+// Recursively look for $where / $function / $accumulator anywhere in the value.
+// Used both by aggregate (nested in stages) and find (nested in filters).
 export function findServerSideJsOperator(value: unknown): string | undefined {
   if (Array.isArray(value)) {
     for (const item of value) {
