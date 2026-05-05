@@ -1,0 +1,104 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Db } from 'mongodb';
+import type { MongoDBClient } from '../mongodb-client.js';
+import { registerDropCollectionTool } from './drop-collection.js';
+import { toolSuccess, toolError } from '../utils/tool-response.js';
+
+const mockDb: jest.Mocked<Db> = {
+  dropCollection: jest.fn(),
+} as unknown as jest.Mocked<Db>;
+
+describe('Drop Collection Tool', () => {
+  let mockServer: jest.Mocked<McpServer>;
+  let mockClient: jest.Mocked<MongoDBClient>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockServer = {
+      registerTool: jest.fn(),
+    } as unknown as jest.Mocked<McpServer>;
+
+    mockClient = {
+      isConnectedToMongoDB: jest.fn(),
+      getDatabase: jest.fn().mockReturnValue(mockDb),
+    } as unknown as jest.Mocked<MongoDBClient>;
+  });
+
+  it('should register the drop-collection tool with write annotation', () => {
+    registerDropCollectionTool(mockServer, mockClient);
+
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
+      'drop-collection',
+      expect.objectContaining({
+        title: 'Drop Collection',
+        description: expect.stringContaining('Drop a collection'),
+        annotations: {
+          writeOperation: true,
+          category: 'write',
+        },
+      }),
+      expect.any(Function),
+    );
+  });
+
+  it('should return an error if not connected to MongoDB', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(false);
+
+    registerDropCollectionTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({
+      database: 'testdb',
+      collection: 'testcollection',
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockDb.dropCollection).not.toHaveBeenCalled();
+  });
+
+  it('should drop a collection successfully', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+    (mockDb.dropCollection as jest.Mock).mockResolvedValue(true);
+
+    registerDropCollectionTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({
+      database: 'testdb',
+      collection: 'old_logs',
+    });
+
+    expect(mockClient.getDatabase).toHaveBeenCalledWith('testdb');
+    expect(mockDb.dropCollection).toHaveBeenCalledWith('old_logs');
+    expect(result).toEqual(
+      toolSuccess({
+        database: 'testdb',
+        collection: 'old_logs',
+        result: true,
+        message: 'Collection dropped successfully',
+      }),
+    );
+  });
+
+  it('should return an error if drop fails (non-existent collection)', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+    (mockDb.dropCollection as jest.Mock).mockRejectedValue(new Error('NamespaceNotFound'));
+
+    registerDropCollectionTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({
+      database: 'testdb',
+      collection: 'missing',
+    });
+
+    expect(result).toEqual(toolError(new Error('NamespaceNotFound')));
+  });
+});
