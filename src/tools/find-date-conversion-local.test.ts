@@ -1,13 +1,12 @@
 import { DateTime } from 'luxon';
 
-// Копируем функцию преобразования дат из find.ts чтобы проверить её работу
+const ISO_DATE_LIKE = /^\d{4}-\d{2}-\d{2}([T ]|$)/;
+
 function convertStringDatesToObjects(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') {
-    if (typeof obj === 'string') {
-      // Use Luxon to check if it's a valid ISO date string
+    if (typeof obj === 'string' && ISO_DATE_LIKE.test(obj)) {
       const dateTime = DateTime.fromISO(obj);
 
-      // Check if the string is a valid date
       if (dateTime.isValid) {
         return dateTime.toJSDate();
       }
@@ -16,7 +15,6 @@ function convertStringDatesToObjects(obj: unknown): unknown {
     return obj;
   }
 
-  // Process arrays
   if (Array.isArray(obj)) {
     return obj.map(item => convertStringDatesToObjects(item));
   }
@@ -24,47 +22,12 @@ function convertStringDatesToObjects(obj: unknown): unknown {
   const result: { [key: string]: unknown } = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    // For all string values, check if they are valid ISO date strings
-    if (typeof value === 'string') {
-      result[key] = convertStringDatesToObjects(value);
-    } else if (typeof value === 'object' && value !== null) {
-      // Special handling for MongoDB operators that typically contain date values (e.g., $gte, $lt, $in, etc.)
-      if (key.startsWith('$')) { // MongoDB operator
-        const convertedValue: { [op: string]: unknown } = {};
-
-        for (const [op, opValue] of Object.entries(value)) {
-          // Apply the same date conversion logic to operator values
-          convertedValue[op] = convertStringDatesToObjects(opValue);
-        }
-        result[key] = convertedValue;
-      } else {
-        // Regular field with object value - check if this object contains MongoDB operators
-        const hasMongoOperator = Object.keys(value).some(k => k.startsWith('$'));
-
-        if (hasMongoOperator) {
-          // This is a field with MongoDB operators (e.g., { $gte: "...", $lt: "..." })
-          const convertedValue: { [op: string]: unknown } = {};
-
-          for (const [op, opValue] of Object.entries(value)) {
-            // Apply the same date conversion logic to operator values
-            convertedValue[op] = convertStringDatesToObjects(opValue);
-          }
-          result[key] = convertedValue;
-        } else {
-          // Regular nested object - process recursively
-          result[key] = convertStringDatesToObjects(value);
-        }
-      }
-    } else {
-      // For other primitive types apply recursive conversion
-      result[key] = convertStringDatesToObjects(value);
-    }
+    result[key] = convertStringDatesToObjects(value);
   }
 
   return result;
 }
 
-// Теперь тесты для этой функции
 describe('convertStringDatesToObjects', () => {
   it('should return non-object values as-is', () => {
     expect(convertStringDatesToObjects(null)).toBe(null);
@@ -87,6 +50,13 @@ describe('convertStringDatesToObjects', () => {
 
     expect(result).toBe(invalidDateString);
     expect(result).not.toBeInstanceOf(Date);
+  });
+
+  it('should not convert short numeric strings (e.g., "123", "2025") to dates', () => {
+    expect(convertStringDatesToObjects('123')).toBe('123');
+    expect(convertStringDatesToObjects('2025')).toBe('2025');
+    expect(convertStringDatesToObjects('active')).toBe('active');
+    expect(convertStringDatesToObjects('user-id-abc-123')).toBe('user-id-abc-123');
   });
 
   it('should handle arrays recursively', () => {
@@ -153,7 +123,7 @@ describe('convertStringDatesToObjects', () => {
     expect(result.createdAt.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
   });
 
-  it('should handle MongoDB operators that contain arrays', () => {
+  it('should preserve $and array structure with date conversion inside', () => {
     const input = {
       $and: [
         { createdAt: { $gte: '2025-11-14T00:00:00.000Z' } },
@@ -161,23 +131,37 @@ describe('convertStringDatesToObjects', () => {
       ],
     };
     const result = convertStringDatesToObjects(input) as {
-      $and: [
-        { createdAt: { $gte: Date } },
-        { updatedAt: { $lt: Date } }
-      ]
+      $and: Array<{ createdAt?: { $gte: Date }; updatedAt?: { $lt: Date } }>;
     };
 
-    // When processing arrays inside MongoDB operators, they become objects with numeric keys
-    expect(typeof result.$and).toBe('object');
-    expect(result.$and['0']).toEqual({
-      createdAt: { $gte: expect.any(Date) },
-    });
-    expect(result.$and['1']).toEqual({
-      updatedAt: { $lt: expect.any(Date) },
-    });
+    expect(Array.isArray(result.$and)).toBe(true);
+    expect(result.$and).toHaveLength(2);
+    expect(result.$and[0].createdAt!.$gte).toBeInstanceOf(Date);
+    expect(result.$and[0].createdAt!.$gte.toISOString()).toBe('2025-11-14T00:00:00.000Z');
+    expect(result.$and[1].updatedAt!.$lt).toBeInstanceOf(Date);
+    expect(result.$and[1].updatedAt!.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
+  });
 
-    expect(result.$and['0'].createdAt.$gte.toISOString()).toBe('2025-11-14T00:00:00.000Z');
-    expect(result.$and['1'].updatedAt.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
+  it('should preserve $or and $nor arrays', () => {
+    const input = {
+      $or: [
+        { status: 'active' },
+        { createdAt: { $gte: '2025-11-14T00:00:00.000Z' } },
+      ],
+      $nor: [
+        { deleted: true },
+      ],
+    };
+    const result = convertStringDatesToObjects(input) as {
+      $or: Array<{ status?: string; createdAt?: { $gte: Date } }>;
+      $nor: Array<{ deleted: boolean }>;
+    };
+
+    expect(Array.isArray(result.$or)).toBe(true);
+    expect(Array.isArray(result.$nor)).toBe(true);
+    expect(result.$or[0]).toEqual({ status: 'active' });
+    expect(result.$or[1].createdAt!.$gte).toBeInstanceOf(Date);
+    expect(result.$nor[0]).toEqual({ deleted: true });
   });
 
   it('should handle nested objects', () => {
@@ -224,7 +208,6 @@ describe('convertStringDatesToObjects', () => {
       };
     };
 
-    // All valid date strings are converted to Date objects regardless of object structure
     expect(result).toEqual({
       dateRange: {
         startDate: expect.any(Date),
@@ -262,5 +245,11 @@ describe('convertStringDatesToObjects', () => {
 
     expect(result.createdAt.$gte.toISOString()).toBe('2025-11-14T00:00:00.000Z');
     expect(result.createdAt.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
+  });
+
+  it('should accept date-only ISO strings', () => {
+    const result = convertStringDatesToObjects('2025-11-14');
+
+    expect(result).toBeInstanceOf(Date);
   });
 });

@@ -33,14 +33,15 @@ type MongoFilterValue =
   | MongoFilterValue[]
   | { [key: string]: unknown | { [op: string]: unknown } };
 
-// Function to convert string dates to Date objects in a filter
+// Cheap regex pre-check before invoking Luxon: ISO 8601 dates start with YYYY-MM-DD
+// followed by 'T', space, or end of string. Filters out >99% of non-date strings.
+const ISO_DATE_LIKE = /^\d{4}-\d{2}-\d{2}([T ]|$)/;
+
 export function convertStringDatesToObjects(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') {
-    if (typeof obj === 'string') {
-      // Use Luxon to check if it's a valid ISO date string
+    if (typeof obj === 'string' && ISO_DATE_LIKE.test(obj)) {
       const dateTime = DateTime.fromISO(obj);
 
-      // Check if the string is a valid date
       if (dateTime.isValid) {
         return dateTime.toJSDate();
       }
@@ -49,7 +50,6 @@ export function convertStringDatesToObjects(obj: unknown): unknown {
     return obj;
   }
 
-  // Process arrays
   if (Array.isArray(obj)) {
     return obj.map(item => convertStringDatesToObjects(item));
   }
@@ -57,41 +57,7 @@ export function convertStringDatesToObjects(obj: unknown): unknown {
   const result: { [key: string]: unknown } = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    // For all string values, check if they are valid ISO date strings
-    if (typeof value === 'string') {
-      result[key] = convertStringDatesToObjects(value);
-    } else if (typeof value === 'object' && value !== null) {
-      // Special handling for MongoDB operators that typically contain date values (e.g., $gte, $lt, $in, etc.)
-      if (key.startsWith('$')) { // MongoDB operator
-        const convertedValue: { [op: string]: unknown } = {};
-
-        for (const [op, opValue] of Object.entries(value)) {
-          // Apply the same date conversion logic to operator values
-          convertedValue[op] = convertStringDatesToObjects(opValue);
-        }
-        result[key] = convertedValue;
-      } else {
-        // Regular field with object value - check if this object contains MongoDB operators
-        const hasMongoOperator = Object.keys(value).some(k => k.startsWith('$'));
-
-        if (hasMongoOperator) {
-          // This is a field with MongoDB operators (e.g., { $gte: "...", $lt: "..." })
-          const convertedValue: { [op: string]: unknown } = {};
-
-          for (const [op, opValue] of Object.entries(value)) {
-            // Apply the same date conversion logic to operator values
-            convertedValue[op] = convertStringDatesToObjects(opValue);
-          }
-          result[key] = convertedValue;
-        } else {
-          // Regular nested object - process recursively
-          result[key] = convertStringDatesToObjects(value);
-        }
-      }
-    } else {
-      // For other primitive types apply recursive conversion
-      result[key] = convertStringDatesToObjects(value);
-    }
+    result[key] = convertStringDatesToObjects(value);
   }
 
   return result;
