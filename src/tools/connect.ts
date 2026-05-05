@@ -3,91 +3,51 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
-// Define the Tool type
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: object;
-  // Examples can contain any structure based on the tool's requirements
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  examples?: any[];
-  // Tool implementation params are dynamic based on the specific tool schema
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  implementation: (_params: any) => Promise<any>;
-}
-
-const connectSchema = z.object({
-});
+const connectSchema = z.object({});
 
 export type ConnectParams = z.infer<typeof connectSchema>;
 
-export const connectTool: Tool = {
-  name: 'connect',
-  description: 'Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING. Call service-info first to check current connection status.',
-  inputSchema: connectSchema,
-  examples: [
-    {
-      input: {},
-      output: {
-        success: true,
-        message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
-        isConnected: true,
-      },
-      description: 'Connect to MongoDB using connection string from environment variable',
-    },
-  ],
-  // Parameters are required by the tool interface but not used since connect doesn't need input parameters
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async implementation(_params: ConnectParams) {
-    const mongoClient = MongoDBClient.getInstance();
-
-    try {
-      // Only use the connection string from environment variable
-      const connectionString = process.env.MONGODB_MCP_CONNECTION_STRING;
-
-      if (!connectionString) {
-        return toolError(new Error('Connection string is required. Please set MONGODB_MCP_CONNECTION_STRING environment variable.'));
-      }
-
-      // Check if we're already connected to the same connection string
-      const currentConnectionInfo = mongoClient.getConnectionInfo();
-
-      if (currentConnectionInfo.isConnected && mongoClient.getConnectionString() === connectionString) {
-        const response = {
-          success: true,
-          message: 'Already connected to MongoDB with the same connection string',
-          isConnected: true,
-        };
-
-        return toolSuccess(response);
-      }
-
-      // If connection string is different or we're not connected, connect
-      await mongoClient.connect();
-
-      const response = {
-        success: true,
-        message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
-        isConnected: true,
-      };
-
-      return toolSuccess(response);
-    } catch (error) {
-      return toolError(error);
-    }
-  },
-};
-
-// Export the registration function for the server
-// The _client parameter is required to match the registration function signature used by server.ts
+// The _client parameter is required to match the registration function signature used by server.ts.
+// connect resolves the client via the singleton because it is the entry point that creates it.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function registerConnectTool(server: McpServer, _client: MongoDBClient) {
   server.registerTool(
-    connectTool.name,
+    'connect',
     {
-      description: connectTool.description,
+      title: 'Connect to MongoDB',
+      description: 'Establish connection to MongoDB using connection string from environment variable MONGODB_MCP_CONNECTION_STRING. Call service-info first to check current connection status.',
       inputSchema: connectSchema.shape,
     },
-    connectTool.implementation,
+    async (_params: ConnectParams) => {
+      const mongoClient = MongoDBClient.getInstance();
+
+      try {
+        const connectionString = process.env.MONGODB_MCP_CONNECTION_STRING;
+
+        if (!connectionString) {
+          return toolError(new Error('Connection string is required. Please set MONGODB_MCP_CONNECTION_STRING environment variable.'));
+        }
+
+        const currentConnectionInfo = mongoClient.getConnectionInfo();
+
+        if (currentConnectionInfo.isConnected && mongoClient.getConnectionString() === connectionString) {
+          return toolSuccess({
+            success: true,
+            message: 'Already connected to MongoDB with the same connection string',
+            isConnected: true,
+          });
+        }
+
+        await mongoClient.connect();
+
+        return toolSuccess({
+          success: true,
+          message: 'Connected to MongoDB successfully using MONGODB_MCP_CONNECTION_STRING environment variable',
+          isConnected: true,
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    },
   );
 }

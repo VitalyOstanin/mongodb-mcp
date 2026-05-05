@@ -1,10 +1,5 @@
 import { z } from "zod";
-
-export interface MongoDBConfig {
-  connectionString?: string;
-  defaultDatabase?: string;
-  timezone: string;
-}
+import type { MongoDBConfig } from "./types.js";
 
 const configSchema = z.object({
   MONGODB_MCP_CONNECTION_STRING: z.string().min(1),
@@ -23,15 +18,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig 
   const parsed = configSchema.safeParse(envToParse);
 
   if (!parsed.success) {
-    const { fieldErrors } = parsed.error.flatten();
-    const missingFields = Object.entries(fieldErrors)
-      .filter(([, issues]) => Array.isArray(issues) && issues.length > 0)
-      .map(([field]) => field);
-    const errorMessage = missingFields.length
-      ? `missing environment variables: ${missingFields.join(", ")}`
-      : "invalid configuration";
+    const issues = parsed.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
 
-    throw new Error(`MongoDB configuration error: ${errorMessage}`);
+    throw new Error(`MongoDB configuration error: ${issues}`);
   }
 
   return {
@@ -41,9 +32,3 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig 
   };
 }
 
-export function enrichConfigWithRedaction(config: MongoDBConfig) {
-  return {
-    defaultDatabase: config.defaultDatabase,
-    timezone: config.timezone,
-  };
-}

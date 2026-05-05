@@ -6,7 +6,7 @@ export interface ServiceInfo {
 }
 
 export interface MongoDBConfig {
-  connectionString?: string;
+  connectionString: string;
   defaultDatabase?: string;
   timezone: string;
 }

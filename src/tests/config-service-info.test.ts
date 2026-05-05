@@ -29,7 +29,7 @@ describe('Config and Service Info Tests', () => {
 
       expect(() => {
         loadConfig();
-      }).toThrow('MongoDB configuration error: missing environment variables: MONGODB_MCP_CONNECTION_STRING');
+      }).toThrow(/MongoDB configuration error: MONGODB_MCP_CONNECTION_STRING/);
     });
 
     it('should accept MONGODB_MCP_CONNECTION_STRING when provided', () => {
