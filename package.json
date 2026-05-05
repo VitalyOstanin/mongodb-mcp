@@ -27,7 +27,7 @@
   "description": "MCP server for comprehensive MongoDB integration: database operations, collections, aggregation, queries, connection management, monitoring",
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "bin": {
     "mongodb-mcp": "dist/index.js"

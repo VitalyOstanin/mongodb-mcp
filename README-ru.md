@@ -31,7 +31,7 @@ MCP сервер для всесторонней интеграции с MongoDB
 
 ## Требования
 
-- Node.js ≥ 20
+- Node.js ≥ 22 (Node 20 вышел из поддержки 2026-04-30)
 - Переменные окружения:
   - `MONGODB_MCP_CONNECTION_STRING` — строка подключения к MongoDB (в формате mongodb:// или mongodb+srv://)
   - `MONGODB_MCP_DEFAULT_DATABASE` — опциональное имя базы данных по умолчанию для операций

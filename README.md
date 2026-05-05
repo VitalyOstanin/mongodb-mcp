@@ -31,7 +31,7 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 
 ## Requirements
 
-- Node.js ≥ 20
+- Node.js ≥ 22 (Node 20 reached EOL on 2026-04-30)
 - Environment variables:
   - `MONGODB_MCP_CONNECTION_STRING` — MongoDB connection string (mongodb:// or mongodb+srv:// format)
   - `MONGODB_MCP_DEFAULT_DATABASE` — optional default database name for operations
