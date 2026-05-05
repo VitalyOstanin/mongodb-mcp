@@ -28,6 +28,7 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 - [MCP Tools](#mcp-tools)
   - [Read-Only Mode Tools](#read-only-mode-tools)
   - [Non-Read-Only Mode Tools](#non-read-only-mode-tools)
+- [Local Development](#local-development)
 
 ## Requirements
 
@@ -121,3 +122,51 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 - Aggregation stages that modify data: `$out`, `$merge`
 
 The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
+
+## Local Development
+
+Quick reference for working with the source. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
+
+Prerequisites:
+
+- Node.js as specified in [`.nvmrc`](.nvmrc) (current LTS, ≥ 22). With nvm: `nvm use`.
+- npm.
+
+Setup:
+
+```bash
+git clone https://github.com/VitalyOstanin/mongodb-mcp.git
+cd mongodb-mcp
+npm install
+```
+
+Common scripts:
+
+| Script                  | Purpose                                                          |
+| ----------------------- | ---------------------------------------------------------------- |
+| `npm run build`         | Compile TypeScript to `dist/` and chmod the CLI entrypoint       |
+| `npm run dev`           | Run `index.ts` directly via `tsx watch` for iterative work       |
+| `npm start`             | Run the compiled server from `dist/`                             |
+| `npm run typecheck`     | Type-check production sources without emitting (`tsconfig.json`) |
+| `npm run typecheck:tests` | Type-check production sources + tests (`tsconfig.test.json`)   |
+| `npm run lint`          | Run ESLint                                                       |
+| `npm run lint:fix`      | Run ESLint with `--fix`                                          |
+| `npm test`              | Run the Jest test suite                                          |
+| `npm run test:watch`    | Run Jest in watch mode                                           |
+| `npm run test:coverage` | Run Jest with coverage (opt-in; threshold gate enforced)         |
+| `npm run test:debug`    | Run Jest with `--detectOpenHandles --runInBand`                  |
+
+Local connection example:
+
+```bash
+export MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017"
+npm run dev
+```
+
+Layout:
+
+- `index.ts` — CLI entry point.
+- `src/server.ts` — MCP server bootstrap.
+- `src/mongodb-client.ts` — singleton MongoDB client with read-only Proxy.
+- `src/tools/` — one MCP tool per file plus its `*.test.ts`.
+- `src/utils/` — shared helpers (streaming exports, schema fragments, date handling, redaction).

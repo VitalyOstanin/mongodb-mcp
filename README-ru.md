@@ -28,6 +28,7 @@ MCP сервер для всесторонней интеграции с MongoDB
 - [MCP Инструменты](#mcp-инструменты)
   - [Инструменты для режима только для чтения](#инструменты-для-режима-только-для-чтения)
   - [Инструменты для режима с возможностью записи](#инструменты-для-режима-с-возможностью-записи)
+- [Локальная разработка](#локальная-разработка)
 
 ## Требования
 
@@ -121,3 +122,51 @@ MCP сервер для всесторонней интеграции с MongoDB
 - Стадии агрегации, изменяющие данные: `$out`, `$merge`
 
 Следующие стадии агрегации ограничены в режиме только для чтения: `$out`, `$merge`. Эти стадии доступны только когда сервер запущен в режиме чтения-записи.
+
+## Локальная разработка
+
+Краткая справка для работы с исходным кодом. Полное руководство для контрибьюторов -- в [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Требования:
+
+- Node.js версии, указанной в [`.nvmrc`](.nvmrc) (текущий LTS, ≥ 22). С nvm: `nvm use`.
+- npm.
+
+Установка:
+
+```bash
+git clone https://github.com/VitalyOstanin/mongodb-mcp.git
+cd mongodb-mcp
+npm install
+```
+
+Основные скрипты:
+
+| Скрипт                    | Назначение                                                              |
+| ------------------------- | ----------------------------------------------------------------------- |
+| `npm run build`           | Компиляция TypeScript в `dist/` и chmod точки входа CLI                 |
+| `npm run dev`             | Запуск `index.ts` напрямую через `tsx watch` для итеративной разработки |
+| `npm start`               | Запуск собранного сервера из `dist/`                                    |
+| `npm run typecheck`       | Проверка типов production кода без emit (`tsconfig.json`)               |
+| `npm run typecheck:tests` | Проверка типов production кода + тестов (`tsconfig.test.json`)          |
+| `npm run lint`            | Запуск ESLint                                                           |
+| `npm run lint:fix`        | Запуск ESLint с `--fix`                                                 |
+| `npm test`                | Запуск Jest-тестов                                                      |
+| `npm run test:watch`      | Запуск Jest в watch-режиме                                              |
+| `npm run test:coverage`   | Запуск Jest с coverage (opt-in; порог coverage обязателен)              |
+| `npm run test:debug`      | Запуск Jest с `--detectOpenHandles --runInBand`                         |
+
+Пример локального подключения:
+
+```bash
+export MONGODB_MCP_CONNECTION_STRING="mongodb://localhost:27017"
+npm run dev
+```
+
+Структура:
+
+- `index.ts` -- точка входа CLI.
+- `src/server.ts` -- bootstrap MCP-сервера.
+- `src/mongodb-client.ts` -- singleton MongoDB-клиента с read-only Proxy.
+- `src/tools/` -- по одному MCP-инструменту на файл плюс соответствующий `*.test.ts`.
+- `src/utils/` -- общие утилиты (streaming-экспорты, фрагменты схем, обработка дат, redaction).
