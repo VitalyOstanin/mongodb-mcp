@@ -1,6 +1,5 @@
 // Top-level pipeline stages that write data and are blocked in read-only mode.
 const WRITE_PIPELINE_STAGES = ['$out', '$merge'] as const;
-
 // Operators that execute arbitrary server-side JavaScript. They can read other
 // collections, run CPU-intensive code, and have historically had sandbox-escape
 // CVEs in older MongoDB versions. They are not stages on their own --

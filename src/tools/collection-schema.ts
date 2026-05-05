@@ -8,7 +8,6 @@ import { writeFile } from 'fs/promises';
 import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 
 const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
-
 const collectionSchemaSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
@@ -99,12 +98,13 @@ export function inferSchema(documents: unknown[]): SchemaInferenceResult {
   const presentCount = new Map<string, number>();
 
   for (const doc of documents) {
-    if (!doc || typeof doc !== 'object') {
+    if (!(doc && typeof doc === 'object')) {
       continue;
     }
 
     for (const [key, value] of Object.entries(doc)) {
       const valueType = getTypeOfValue(value);
+
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!properties[key]) {
         properties[key] = { type: valueType };

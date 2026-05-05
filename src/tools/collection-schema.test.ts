@@ -1,6 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Db, Collection, FindCursor } from 'mongodb';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Db, type Collection, type FindCursor } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { registerCollectionSchemaTool, inferSchema } from './collection-schema.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
@@ -213,6 +212,7 @@ describe('CollectionSchema Tool', () => {
     ]);
 
     registerCollectionSchemaTool(mockServer, mockClient);
+
     const handler = mockServer.registerTool.mock.calls[0][2] as (
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params: any,

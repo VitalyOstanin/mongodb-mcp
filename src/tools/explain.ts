@@ -9,7 +9,6 @@ import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 // explain saves a single JSON object, not a stream of documents, so the
 // jsonl/json `format` switch is not relevant. Only saveToFile + filePath apply.
 const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
-
 const explainSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),

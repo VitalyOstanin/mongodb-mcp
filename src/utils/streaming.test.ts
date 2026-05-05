@@ -54,6 +54,7 @@ describe('export path utilities', () => {
   describe('generateTempFilePath', () => {
     it('should produce unique paths under the export directory', () => {
       delete process.env.MONGODB_MCP_EXPORT_DIR;
+
       const a = generateTempFilePath();
       const b = generateTempFilePath();
 

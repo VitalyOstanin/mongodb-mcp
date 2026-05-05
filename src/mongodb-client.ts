@@ -9,7 +9,6 @@ const DB_LEVEL_WRITE_OPERATIONS = new Set([
   'findOneAndReplace', 'findOneAndUpdate', 'findOneAndDelete',
   'bulkWrite',
 ]);
-
 const COLLECTION_LEVEL_WRITE_OPERATIONS = new Set([
   'insertOne', 'insertMany', 'updateOne', 'updateMany',
   'replaceOne', 'deleteOne', 'deleteMany', 'findOneAndReplace',
@@ -189,6 +188,7 @@ export class MongoDBClient {
   private createReadonlyDatabaseProxy(db: Db): Db {
     // Capture `this` so the Proxy handler can call back into class methods
     // even though `this` inside `get(target, prop)` refers to the handler.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
     return new Proxy(db, {

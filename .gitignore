@@ -16,6 +16,9 @@ temp/
 .claude/
 .qwen/
 
+# local-only review artifacts (project-check tool output)
+docs/reviews/
+
 # secrets
 .env
 .env.*

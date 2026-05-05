@@ -7,7 +7,6 @@ import { prepareExportPath } from '../utils/streaming.js';
 import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 
 const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
-
 const mongodbLogsSchema = z.object({
   limit: z.number().optional().default(50).describe('The maximum number of log entries to return.'),
   type: z.enum(['global', 'startupWarnings']).optional().default('global')

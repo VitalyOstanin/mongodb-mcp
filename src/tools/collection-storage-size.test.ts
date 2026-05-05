@@ -216,6 +216,7 @@ describe('CollectionStorageSize Tool', () => {
     mockAdmin.command.mockResolvedValue({ size: 1024 ** 5 });
 
     registerCollectionStorageSizeTool(mockServer, mockClient);
+
     const registerCall = mockServer.registerTool.mock.calls[0];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
@@ -229,6 +230,7 @@ describe('CollectionStorageSize Tool', () => {
     mockAdmin.command.mockResolvedValue({ size: -1 });
 
     registerCollectionStorageSizeTool(mockServer, mockClient);
+
     const registerCall = mockServer.registerTool.mock.calls[0];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
