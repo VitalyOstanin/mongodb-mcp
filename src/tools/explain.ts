@@ -86,7 +86,13 @@ export function registerExplainTool(server: McpServer, client: MongoDBClient) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const query = (args.query as any) ?? {};
 
-            explainResult = await collection.find(query).explain(verbosity);
+            // Use db.command({ explain: { count, query }, verbosity }) so the
+            // optimizer reports the COUNT_SCAN plan rather than the
+            // IXSCAN+FETCH plan that find().explain() would expose.
+            explainResult = await db.command({
+              explain: { count: params.collection, query },
+              verbosity,
+            });
             break;
           }
 

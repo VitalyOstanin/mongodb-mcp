@@ -161,6 +161,26 @@ describe('Insert Tool', () => {
     );
  });
 
+  it('should reject documents=[] explicitly instead of falling back to single document', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+
+    registerInsertTool(mockServer, mockClient);
+
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({
+      database: 'testdb',
+      collection: 'testcollection',
+      document: { name: 'fallback-bait' },
+      documents: [],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockCollection.insertOne).not.toHaveBeenCalled();
+    expect(mockCollection.insertMany).not.toHaveBeenCalled();
+  });
+
   it('should return an error if insertion fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
     mockCollection.insertOne.mockRejectedValue(new Error('Insert failed'));

@@ -210,6 +210,33 @@ describe('CollectionStorageSize Tool', () => {
     );
   });
 
+  it('should format petabyte sizes (>= 1PB) without falling off the units array', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+    // 1 PB = 1024^5 bytes
+    mockAdmin.command.mockResolvedValue({ size: 1024 ** 5 });
+
+    registerCollectionStorageSizeTool(mockServer, mockClient);
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({ database: 'testdb', collection: 'huge' });
+
+    expect(result.content[0].text).toContain('"sizeFormatted":"1 PB"');
+  });
+
+  it('should treat negative sizes as 0 Bytes (defensive)', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+    mockAdmin.command.mockResolvedValue({ size: -1 });
+
+    registerCollectionStorageSizeTool(mockServer, mockClient);
+    const registerCall = mockServer.registerTool.mock.calls[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = registerCall[2] as (params: any) => Promise<any>;
+    const result = await handler({ database: 'testdb', collection: 'broken' });
+
+    expect(result.content[0].text).toContain('"sizeFormatted":"0 Bytes"');
+  });
+
   it('should return an error if getting storage size fails', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
     mockAdmin.command.mockRejectedValue(new Error('Failed to get storage size'));

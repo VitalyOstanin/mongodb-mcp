@@ -31,14 +31,19 @@ export function registerInsertTool(server: McpServer, client: MongoDBClient) {
         return toolError(new Error('Not connected to MongoDB. Please connect first.'));
       }
 
+      // documents=[] is almost certainly a template-rendering bug on the
+      // caller side. Reject it explicitly instead of silently falling back
+      // to the single-document path with the unrelated `document` payload.
+      if (documents !== undefined && documents.length === 0) {
+        return toolError(new Error('documents array must not be empty when provided'));
+      }
+
       try {
         const db = client.getDatabase(database);
         const collection = db.collection(collectionName);
-        let result;
 
-        if (documents && documents.length > 0) {
-          // Insert multiple documents
-          result = await collection.insertMany(documents);
+        if (documents !== undefined) {
+          const result = await collection.insertMany(documents);
 
           return toolSuccess({
             database,
@@ -47,18 +52,17 @@ export function registerInsertTool(server: McpServer, client: MongoDBClient) {
             insertedIds: Object.values(result.insertedIds),
             operation: 'insertMany',
           });
-        } else {
-          // Insert single document
-          result = await collection.insertOne(document);
-
-          return toolSuccess({
-            database,
-            collection: collectionName,
-            insertedId: result.insertedId,
-            insertedCount: 1,
-            operation: 'insertOne',
-          });
         }
+
+        const result = await collection.insertOne(document);
+
+        return toolSuccess({
+          database,
+          collection: collectionName,
+          insertedId: result.insertedId,
+          insertedCount: 1,
+          operation: 'insertOne',
+        });
       } catch (error) {
         return toolError(error);
       }

@@ -1,6 +1,8 @@
 import { Settings } from "luxon";
 
-let currentTimezone = "Europe/Moscow";
+export const DEFAULT_TIMEZONE = "Europe/Moscow";
+
+let currentTimezone: string = DEFAULT_TIMEZONE;
 
 export function initializeTimezone(timezone: string): void {
   currentTimezone = timezone;

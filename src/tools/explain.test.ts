@@ -23,6 +23,7 @@ const mockCollection: jest.Mocked<Collection> = {
 } as unknown as jest.Mocked<Collection>;
 const mockDb: jest.Mocked<Db> = {
   collection: jest.fn().mockReturnValue(mockCollection),
+  command: jest.fn(),
 } as unknown as jest.Mocked<Db>;
 
 describe('Explain Tool', () => {
@@ -175,19 +176,16 @@ describe('Explain Tool', () => {
     );
   });
 
-  it('should explain a count operation', async () => {
+  it('should explain a count operation via db.command', async () => {
     mockClient.isConnectedToMongoDB.mockReturnValue(true);
 
     const mockExplainResult = { queryPlanner: { plannerVersion: 1, namespace: 'testdb.testcollection' } };
 
-    mockFindCursor.explain.mockResolvedValue(mockExplainResult);
+    (mockDb.command as jest.Mock).mockResolvedValue(mockExplainResult);
 
     registerExplainTool(mockServer, mockClient);
 
-    // Get the tool handler function
     const registerCall = mockServer.registerTool.mock.calls[0];
-    // Using 'any' for params and return type because we're accessing the registered tool handler
-    // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const params = {
@@ -200,8 +198,13 @@ describe('Explain Tool', () => {
     };
     const result = await handler(params);
 
-    expect(mockCollection.find).toHaveBeenCalledWith({ status: 'active' });
-    expect(mockFindCursor.explain).toHaveBeenCalledWith('queryPlanner');
+    expect(mockDb.command).toHaveBeenCalledWith({
+      explain: { count: 'testcollection', query: { status: 'active' } },
+      verbosity: 'queryPlanner',
+    });
+    // The find path must NOT be used for count -- previously it produced an
+    // IXSCAN+FETCH plan instead of COUNT_SCAN.
+    expect(mockCollection.find).not.toHaveBeenCalled();
 
     expect(result).toEqual(
       toolSuccess({

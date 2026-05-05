@@ -10,15 +10,18 @@ const collectionStorageSizeSchema = z.object({
 
 export type CollectionStorageSizeParams = z.infer<typeof collectionStorageSizeSchema>;
 
-// Helper function to format bytes in human-readable form
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes <= 0 || !Number.isFinite(bytes)) {
+    return '0 Bytes';
+  }
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  // Cap at sizes.length - 1 so a petabyte+ value doesn't fall off the end
+  // of the array and produce 'undefined'.
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 // Export the registration function for the server

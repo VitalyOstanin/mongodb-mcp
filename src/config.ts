@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { MongoDBConfig } from "./types.js";
+import { DEFAULT_TIMEZONE } from "./utils/date.js";
 
 const configSchema = z.object({
   MONGODB_MCP_CONNECTION_STRING: z.string().min(1),
@@ -28,7 +29,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig 
   return {
     connectionString: parsed.data.MONGODB_MCP_CONNECTION_STRING,
     defaultDatabase: parsed.data.MONGODB_MCP_DEFAULT_DATABASE,
-    timezone: parsed.data.MONGODB_MCP_TIMEZONE ?? "Europe/Moscow",
+    timezone: parsed.data.MONGODB_MCP_TIMEZONE ?? DEFAULT_TIMEZONE,
   };
 }
 
