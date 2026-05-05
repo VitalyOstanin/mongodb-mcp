@@ -61,7 +61,7 @@ describe('Find Tool', () => {
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'find',
       expect.objectContaining({
-        description: 'Run a find query against a MongoDB collection. IMPORTANT: Before using this tool, consider running the collection-schema tool to determine the correct field names in the collection. When using date ranges, account for the server timezone. For example, when querying records for a specific date, set time range boundaries accounting for the server timezone (not UTC). NOTE: The default limit is 10 documents. To retrieve more documents, explicitly specify a higher limit value. For full results without limitation, set a high limit value appropriate to your needs.',
+        description: expect.stringContaining('Run a find query against a MongoDB collection'),
       }),
       expect.any(Function),
     );
@@ -134,8 +134,9 @@ describe('Find Tool', () => {
         database: 'testdb',
         collection: 'testcollection',
         documents: mockDocuments,
-        count: 2,
+        returnedCount: 2,
         limit: 10,
+        limited: false,
       }),
     );
   });
@@ -179,8 +180,9 @@ describe('Find Tool', () => {
         database: 'testdb',
         collection: 'testcollection',
         documents: mockDocuments,
-        count: 2,
+        returnedCount: 2,
         limit: 5,
+        limited: false,
       }),
     );
   });

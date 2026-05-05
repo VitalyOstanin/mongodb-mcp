@@ -68,7 +68,7 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
     'find',
     {
       title: 'Find Documents',
-      description: 'Run a find query against a MongoDB collection. IMPORTANT: Before using this tool, consider running the collection-schema tool to determine the correct field names in the collection. When using date ranges, account for the server timezone. For example, when querying records for a specific date, set time range boundaries accounting for the server timezone (not UTC). NOTE: The default limit is 10 documents. To retrieve more documents, explicitly specify a higher limit value. For full results without limitation, set a high limit value appropriate to your needs.',
+      description: 'Run a find query against a MongoDB collection. IMPORTANT: Before using this tool, consider running the collection-schema tool to determine the correct field names in the collection. When using date ranges, account for the server timezone. For example, when querying records for a specific date, set time range boundaries accounting for the server timezone (not UTC). NOTE: The default limit is 10 documents (capped at 1000 in-memory). The response field "returnedCount" reflects the number of documents returned, NOT the total matching the filter -- use the count tool with the same filter for the total. When saveToFile=true and limit is omitted, all matching documents are streamed to the file with no upper bound.',
       inputSchema: findSchema.shape,
     },
     async (params: FindParams) => {
@@ -154,14 +154,16 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
             query = query.sort(sort as any);
           }
 
-          // Execute the query
           const documents = await query.toArray();
           const result = {
             database,
             collection: collectionName,
             documents,
-            count: documents.length,
+            // returnedCount makes it explicit that this is the size of the
+            // returned page, not the total matching the filter.
+            returnedCount: documents.length,
             limit: effectiveLimit,
+            limited: documents.length === effectiveLimit,
           };
 
           return toolSuccess(result);
