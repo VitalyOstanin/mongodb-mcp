@@ -1,52 +1,53 @@
+import type { Mocked } from 'vitest';
 import type { MongoClient, Db, Collection } from 'mongodb';
 import { MongoDBClient } from './mongodb-client.js';
 
 // Mock MongoDB objects for testing
 const mockAggregateCursor = {
-  explain: jest.fn(),
-  [Symbol.asyncIterator]: jest.fn(),
+  explain: vi.fn(),
+  [Symbol.asyncIterator]: vi.fn(),
 };
 const mockFindCursor = {
-  explain: jest.fn(),
-  project: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(),
+  explain: vi.fn(),
+  project: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  sort: vi.fn().mockReturnThis(),
 };
-const mockCollection: jest.Mocked<Collection> = {
-  aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
-  find: jest.fn().mockReturnValue(mockFindCursor),
-  findOne: jest.fn().mockReturnValue({}),
-  countDocuments: jest.fn().mockResolvedValue(0),
-  insertOne: jest.fn(),
-  insertMany: jest.fn(),
-  updateOne: jest.fn(),
-  updateMany: jest.fn(),
-  deleteOne: jest.fn(),
-  deleteMany: jest.fn(),
-  findOneAndReplace: jest.fn(),
-  findOneAndUpdate: jest.fn(),
-  findOneAndDelete: jest.fn(),
-  bulkWrite: jest.fn(),
-  createIndex: jest.fn(),
-  dropIndex: jest.fn(),
-  drop: jest.fn(),
-} as unknown as jest.Mocked<Collection>;
-const mockDb: jest.Mocked<Db> = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-  aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
-  insertOne: jest.fn(),
-} as unknown as jest.Mocked<Db>;
-const mockMongoClient: jest.Mocked<MongoClient> = {
-  connect: jest.fn().mockResolvedValue(undefined),
-  db: jest.fn().mockReturnValue(mockDb),
-  close: jest.fn().mockResolvedValue(undefined),
-} as unknown as jest.Mocked<MongoClient>;
+const mockCollection: Mocked<Collection> = {
+  aggregate: vi.fn().mockReturnValue(mockAggregateCursor),
+  find: vi.fn().mockReturnValue(mockFindCursor),
+  findOne: vi.fn().mockReturnValue({}),
+  countDocuments: vi.fn().mockResolvedValue(0),
+  insertOne: vi.fn(),
+  insertMany: vi.fn(),
+  updateOne: vi.fn(),
+  updateMany: vi.fn(),
+  deleteOne: vi.fn(),
+  deleteMany: vi.fn(),
+  findOneAndReplace: vi.fn(),
+  findOneAndUpdate: vi.fn(),
+  findOneAndDelete: vi.fn(),
+  bulkWrite: vi.fn(),
+  createIndex: vi.fn(),
+  dropIndex: vi.fn(),
+  drop: vi.fn(),
+} as unknown as Mocked<Collection>;
+const mockDb: Mocked<Db> = {
+  collection: vi.fn().mockReturnValue(mockCollection),
+  aggregate: vi.fn().mockReturnValue(mockAggregateCursor),
+  insertOne: vi.fn(),
+} as unknown as Mocked<Db>;
+const mockMongoClient: Mocked<MongoClient> = {
+  connect: vi.fn().mockResolvedValue(undefined),
+  db: vi.fn().mockReturnValue(mockDb),
+  close: vi.fn().mockResolvedValue(undefined),
+} as unknown as Mocked<MongoClient>;
 
 describe('MongoDBClient', () => {
   let client: MongoDBClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     client = MongoDBClient.getInstance();
     // Accessing private properties for testing purposes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

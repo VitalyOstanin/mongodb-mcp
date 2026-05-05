@@ -2,35 +2,35 @@ import { MongoDBClient } from './mongodb-client.js';
 
 // Mock MongoDB objects for testing
 const mockAggregateCursor = {
-  explain: jest.fn(),
-  [Symbol.asyncIterator]: jest.fn(),
+  explain: vi.fn(),
+  [Symbol.asyncIterator]: vi.fn(),
 };
 const mockFindCursor = {
-  explain: jest.fn(),
-  project: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(),
+  explain: vi.fn(),
+  project: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  sort: vi.fn().mockReturnThis(),
 };
 const mockCollection = {
-  aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
-  find: jest.fn().mockReturnValue(mockFindCursor),
-  insertOne: jest.fn(),
-  updateOne: jest.fn(),
+  aggregate: vi.fn().mockReturnValue(mockAggregateCursor),
+  find: vi.fn().mockReturnValue(mockFindCursor),
+  insertOne: vi.fn(),
+  updateOne: vi.fn(),
 };
 const mockDb = {
-  collection: jest.fn().mockReturnValue(mockCollection),
-  aggregate: jest.fn().mockReturnValue(mockAggregateCursor),
-  insertOne: jest.fn(),
-  db: jest.fn(),
+  collection: vi.fn().mockReturnValue(mockCollection),
+  aggregate: vi.fn().mockReturnValue(mockAggregateCursor),
+  insertOne: vi.fn(),
+  db: vi.fn(),
 };
 const mockMongoClient = {
-  connect: jest.fn().mockResolvedValue(undefined),
-  db: jest.fn().mockReturnValue(mockDb),
-  close: jest.fn().mockResolvedValue(undefined),
-  on: jest.fn().mockReturnThis(),
-  removeAllListeners: jest.fn().mockReturnThis(),
+  connect: vi.fn().mockResolvedValue(undefined),
+  db: vi.fn().mockReturnValue(mockDb),
+  close: vi.fn().mockResolvedValue(undefined),
+  on: vi.fn().mockReturnThis(),
+  removeAllListeners: vi.fn().mockReturnThis(),
   topology: {
-    isConnected: jest.fn().mockReturnValue(true),
+    isConnected: vi.fn().mockReturnValue(true),
   },
 };
 
@@ -38,7 +38,7 @@ describe('MongoDBClient Extended', () => {
   let client: MongoDBClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Clear the singleton instance by accessing private property
     Object.defineProperty(MongoDBClient, 'instance', {
@@ -192,7 +192,7 @@ describe('MongoDBClient Extended', () => {
       // Setup mock client
       const mockClientWithTopology = {
         ...mockMongoClient,
-        topology: { isConnected: jest.fn().mockReturnValue(true) },
+        topology: { isConnected: vi.fn().mockReturnValue(true) },
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
