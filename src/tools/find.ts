@@ -4,11 +4,10 @@ import type { MongoDBClient } from '../mongodb-client.js';
 import type { Filter, Document } from 'mongodb';
 import { DateTime } from 'luxon';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-import { mkdir } from 'fs/promises';
-import { dirname } from 'path';
-import { generateTempFilePath } from '../utils/streaming.js';
+import { prepareExportPath } from '../utils/streaming.js';
 import { streamMongoCursorToFile, streamMongoCursorToFileAsArray } from '../utils/mongodb-stream.js';
 import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
+import { findServerSideJsOperator } from '../utils/aggregation-safety.js';
 
 const findSchema = z.object({
   database: z.string().describe('Database name'),
@@ -80,6 +79,14 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
       }
 
       try {
+        if (client.isReadonly()) {
+          const jsOp = findServerSideJsOperator(filter);
+
+          if (jsOp) {
+            return toolError(new Error(`Operator '${jsOp}' is not allowed in read-only mode`));
+          }
+        }
+
         const db = client.getDatabase(database);
         const collection = db.collection(collectionName);
         // Convert string dates in filter to Date objects
@@ -107,13 +114,8 @@ export function registerFindTool(server: McpServer, client: MongoDBClient) {
           }
 
           // Stream the results directly to file without accumulating in memory
-          const { filePath = generateTempFilePath(), format = 'jsonl' } = params;
-          // Ensure directory exists
-          const dir = dirname(filePath);
-
-          await mkdir(dir, { recursive: true });
-
-          // Choose streaming function based on format parameter and get the count of processed documents
+          const { format = 'jsonl' } = params;
+          const filePath = await prepareExportPath(params.filePath);
           let processedCount: number;
 
           if (format === 'json') {

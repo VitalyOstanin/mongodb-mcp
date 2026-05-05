@@ -2,9 +2,8 @@ import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-import { writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
-import { generateTempFilePath } from '../utils/streaming.js';
+import { writeFile } from 'fs/promises';
+import { prepareExportPath } from '../utils/streaming.js';
 import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 
 // explain saves a single JSON object, not a stream of documents, so the
@@ -104,14 +103,9 @@ export function registerExplainTool(server: McpServer, client: MongoDBClient) {
         }
 
         if (params.saveToFile) {
-          const filePath = params.filePath ?? generateTempFilePath();
-          // Ensure directory exists
-          const dir = dirname(filePath);
+          const filePath = await prepareExportPath(params.filePath);
 
-          await mkdir(dir, { recursive: true });
-
-          // Write response to file
-          await writeFile(filePath, JSON.stringify(explainResult, null, 2), 'utf8');
+          await writeFile(filePath, JSON.stringify(explainResult, null, 2), { encoding: 'utf8', flag: 'wx' });
 
           return toolSuccess({
             savedToFile: true,

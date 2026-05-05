@@ -3,9 +3,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ObjectId } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
-import { generateTempFilePath } from '../utils/streaming.js';
-import { writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
+import { prepareExportPath } from '../utils/streaming.js';
+import { writeFile } from 'fs/promises';
 import { saveToFileSchemaFragment } from '../utils/save-to-file-schema.js';
 
 const { saveToFile: saveToFileFragment, filePath: filePathFragment } = saveToFileSchemaFragment;
@@ -208,11 +207,9 @@ export function registerCollectionSchemaTool(server: McpServer, client: MongoDBC
         const response = buildResponse(params.database, params.collection, documents, params.sampleSize);
 
         if (params.saveToFile) {
-          const filePath = params.filePath ?? generateTempFilePath();
-          const dir = dirname(filePath);
+          const filePath = await prepareExportPath(params.filePath);
 
-          await mkdir(dir, { recursive: true });
-          await writeFile(filePath, JSON.stringify(response, null, 2), 'utf8');
+          await writeFile(filePath, JSON.stringify(response, null, 2), { encoding: 'utf8', flag: 'wx' });
 
           return toolSuccess({
             savedToFile: true,

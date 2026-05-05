@@ -4,6 +4,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MongoDBServer } from "./src/server.js";
+import { redactError } from "./src/utils/redact.js";
 
 async function main() {
   const argv = await yargs(hideBin(process.argv))
@@ -26,6 +27,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("MongoDB MCP server crashed", error);
+  console.error("MongoDB MCP server crashed", redactError(error));
   process.exit(1);
 });

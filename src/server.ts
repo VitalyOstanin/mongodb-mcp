@@ -3,6 +3,7 @@ import { VERSION } from "./version.js";
 import { MongoDBClient } from "./mongodb-client.js";
 import { loadConfig } from "./config.js";
 import { initializeTimezone } from "./utils/date.js";
+import { redactError } from "./utils/redact.js";
 import { registerConnectTool } from "./tools/connect.js";
 import { registerDisconnectTool } from "./tools/disconnect.js";
 import { registerListDatabasesTool } from "./tools/list-databases.js";
@@ -86,7 +87,7 @@ export class MongoDBServer {
       if (connectionString) {
         // readonlyMode is already set via setReadonlyMode above
         this.mongoClient.connect().catch(error => {
-          console.error("Failed to auto-connect to MongoDB:", error);
+          console.error("Failed to auto-connect to MongoDB:", redactError(error));
           // Set connection error state or emit event for proper error handling
           // Consider retrying connection or notifying the user
           process.exitCode = 1;
