@@ -49,6 +49,9 @@ Optional: copy `.env.example` to `.env` if/when you maintain a local one. `.env`
 | `npm run test:watch`      | Run Vitest in watch mode                                         |
 | `npm run test:coverage`   | Run Vitest with v8 coverage (opt-in; threshold gate enforced)    |
 | `npm run test:debug`      | Run Vitest sequentially (`--no-file-parallelism`)                |
+| `npm run test:integration:up`   | Start the integration MongoDB via `podman-compose` (compose.yaml) |
+| `npm run test:integration`      | Run integration tests against the running container             |
+| `npm run test:integration:down` | Stop and remove the integration MongoDB container               |
 
 Editor settings are pinned via [`.editorconfig`](.editorconfig). Most editors pick this up automatically.
 
@@ -65,6 +68,16 @@ npm run build
 ```
 
 If you touched code that affects coverage, also run `npm run test:coverage` and confirm the coverage gate still passes.
+
+If you touched anything tested in `test-integration/`, also bring up the container and run the integration suite:
+
+```bash
+npm run test:integration:up
+npm run test:integration
+npm run test:integration:down
+```
+
+CI runs the integration suite automatically via a GitHub Actions service container (see `.github/workflows/ci.yml`).
 
 ## Coding Style
 

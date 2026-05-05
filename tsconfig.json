@@ -6,8 +6,10 @@
   },
   "include": [
     "src/**/*",
+    "test-integration/**/*",
     "index.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "vitest.integration.config.ts"
   ],
   "exclude": [
     "dist",

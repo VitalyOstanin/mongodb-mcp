@@ -1,0 +1,26 @@
+# Integration test fixture. Spin up via:
+#   npm run test:integration:up
+# and tear down via:
+#   npm run test:integration:down
+#
+# Tests connect via MONGODB_MCP_CONNECTION_STRING:
+#   mongodb://test:test@127.0.0.1:57017/?authSource=admin
+services:
+  mongo:
+    image: docker.io/library/mongo:8.0.21
+    container_name: mongodb-mcp-it
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: test
+      MONGO_INITDB_ROOT_PASSWORD: test
+    ports:
+      - "127.0.0.1:57017:27017"
+    tmpfs:
+      - /data/db
+    healthcheck:
+      # Single-line CMD-SHELL form -- podman-compose mangles the list form
+      # of healthcheck.test into a malformed string when individual tokens
+      # contain quotes; shell-string form sidesteps that.
+      test: "mongosh --quiet -u test -p test --authenticationDatabase admin --eval 'db.adminCommand(\"ping\").ok'"
+      interval: 1s
+      timeout: 5s
+      retries: 30

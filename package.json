@@ -14,6 +14,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:debug": "vitest run --no-file-parallelism",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration:up": "podman-compose -f compose.yaml up -d",
+    "test:integration:down": "podman-compose -f compose.yaml down",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

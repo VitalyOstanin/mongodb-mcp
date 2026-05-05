@@ -11,6 +11,7 @@ dist/
 
 # coverage / temp
 coverage/
+coverage-integration/
 tmp/
 temp/
 .claude/
