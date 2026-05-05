@@ -13,7 +13,12 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json',
+        // typescript-eslint 8 projectService: shares one TypeScript server
+        // across the whole run instead of building a Program per file.
+        // Cuts peak memory dramatically on type-aware rules.
+        // The root tsconfig.json includes both src and tests; build runs
+        // from tsconfig.build.json which excludes tests.
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },

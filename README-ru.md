@@ -144,11 +144,11 @@ npm install
 
 | Скрипт                    | Назначение                                                              |
 | ------------------------- | ----------------------------------------------------------------------- |
-| `npm run build`           | Компиляция TypeScript в `dist/` и chmod точки входа CLI                 |
-| `npm run dev`             | Запуск `index.ts` напрямую через `tsx watch` для итеративной разработки |
-| `npm start`               | Запуск собранного сервера из `dist/`                                    |
-| `npm run typecheck`       | Проверка типов production кода без emit (`tsconfig.json`)               |
-| `npm run typecheck:tests` | Проверка типов production кода + тестов (`tsconfig.test.json`)          |
+| `npm run build`           | Компиляция TypeScript в `dist/` (`tsconfig.build.json`) и chmod точки входа CLI |
+| `npm run dev`             | Запуск `index.ts` напрямую через `tsx watch` для итеративной разработки         |
+| `npm start`               | Запуск собранного сервера из `dist/`                                            |
+| `npm run typecheck`       | Проверка типов исходников + тестов (`tsconfig.json`, без emit)                  |
+| `npm run typecheck:tests` | Проверка типов с дополнительными строгими флагами (`tsconfig.test.json`)        |
 | `npm run lint`            | Запуск ESLint                                                           |
 | `npm run lint:fix`        | Запуск ESLint с `--fix`                                                 |
 | `npm test`                | Запуск Jest-тестов                                                      |

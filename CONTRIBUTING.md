@@ -38,11 +38,11 @@ Optional: copy `.env.example` to `.env` if/when you maintain a local one. `.env`
 
 | Script                    | Purpose                                                          |
 | ------------------------- | ---------------------------------------------------------------- |
-| `npm run build`           | Compile TypeScript to `dist/` and chmod the CLI entrypoint       |
+| `npm run build`           | Compile TypeScript to `dist/` (`tsconfig.build.json`) and chmod the CLI entrypoint |
 | `npm run dev`             | Run `index.ts` directly via `tsx watch` for iterative work       |
 | `npm start`               | Run the compiled server from `dist/`                             |
-| `npm run typecheck`       | Type-check production sources without emitting (`tsconfig.json`) |
-| `npm run typecheck:tests` | Type-check production sources + tests (`tsconfig.test.json`)     |
+| `npm run typecheck`       | Type-check sources + tests (`tsconfig.json`, no emit)            |
+| `npm run typecheck:tests` | Type-check with extra strict flags (`tsconfig.test.json`)        |
 | `npm run lint`            | Run ESLint                                                       |
 | `npm run lint:fix`        | Run ESLint with `--fix`                                          |
 | `npm test`                | Run the Jest test suite                                          |

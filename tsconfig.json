@@ -2,8 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "moduleResolution": "bundler",
-    "outDir": "dist",
-    "rootDir": "."
+    "noEmit": true
   },
   "include": [
     "src/**/*",
@@ -11,8 +10,6 @@
   ],
   "exclude": [
     "dist",
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "node_modules"
   ]
 }
