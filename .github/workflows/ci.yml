@@ -1,14 +1,18 @@
 name: CI
 
+# Run on push to master (after merges) and on PRs targeting master.
+# Pull requests from branches in the same repo would otherwise be tested twice
+# (once on push, once on pull_request).
 on:
   push:
-    branches: [ "**" ]
+    branches: [master]
   pull_request:
-    branches: [ "**" ]
+    branches: [master]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -16,10 +20,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -29,6 +33,12 @@ jobs:
 
     - name: Run linter
       run: npm run lint
+
+    - name: Typecheck production sources
+      run: npm run typecheck
+
+    - name: Typecheck tests
+      run: npm run typecheck:tests
 
     - name: Run tests
       run: npm test
@@ -40,7 +50,7 @@ jobs:
       run: |
         test -f dist/index.js || { echo "Error: dist/index.js not found"; exit 1; }
         test -x dist/index.js || { echo "Error: dist/index.js is not executable"; exit 1; }
-        echo "✅ Build verification passed"
+        echo "Build verification passed"
 
     - name: List build artifacts
       run: ls -lh dist/
