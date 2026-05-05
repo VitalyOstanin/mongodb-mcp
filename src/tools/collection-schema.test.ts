@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Db, Collection, FindCursor } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
-import { registerCollectionSchemaTool } from './collection-schema.js';
+import { registerCollectionSchemaTool, inferSchema } from './collection-schema.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 
 // Mock objects for testing
@@ -118,7 +119,7 @@ describe('CollectionSchema Tool', () => {
             age: { type: 'integer' },
             email: { type: 'string' },
           },
-          required: ['_id', 'name', 'age', 'email'],
+          required: ['_id', 'name', 'age'],
         },
       }),
     );
@@ -166,7 +167,7 @@ describe('CollectionSchema Tool', () => {
             age: { type: 'integer' },
             email: { type: 'string' },
           },
-          required: ['_id', 'name', 'age', 'email'],
+          required: ['_id', 'name', 'age'],
         },
       }),
     );
@@ -200,6 +201,58 @@ describe('CollectionSchema Tool', () => {
         message: 'No documents found in the collection to infer schema',
       }),
     );
+  });
+
+  it('should mark a field required only when present (non-null) in every sampled document', async () => {
+    mockClient.isConnectedToMongoDB.mockReturnValue(true);
+    mockFindCursor.toArray.mockResolvedValue([
+      { _id: 1, name: 'a' },
+      { _id: 2, name: 'b', extra: 'sometimes' },
+      { _id: 3, name: null },
+      { _id: 4 },
+    ]);
+
+    registerCollectionSchemaTool(mockServer, mockClient);
+    const handler = mockServer.registerTool.mock.calls[0][2] as (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      params: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) => Promise<any>;
+    const result = await handler({ database: 'db', collection: 'c', sampleSize: 50 });
+
+    // _id is the only field present (and non-null) in all 4 documents.
+    // name is null in one and missing in another -> not required.
+    // extra is in only one document -> not required.
+    expect(result.content[0].text).toContain('"required":["_id"]');
+  });
+
+  it('should not flag short non-ISO strings as date', () => {
+    const schema = inferSchema([
+      { v: '123' },
+      { v: '2025' },
+      { v: 'active' },
+      { v: 'user-id-abc-123' },
+    ]);
+
+    expect(schema.properties.v.type).toBe('string');
+  });
+
+  it('should detect ISO date strings as date', () => {
+    const schema = inferSchema([
+      { ts: '2025-11-14T10:31:26.517Z' },
+      { ts: '2025-11-15T10:31:26.517Z' },
+    ]);
+
+    expect(schema.properties.ts.type).toBe('date');
+  });
+
+  it('should detect MongoDB ObjectId via instanceof', () => {
+    const schema = inferSchema([
+      { _id: new ObjectId(), name: 'a' },
+      { _id: new ObjectId(), name: 'b' },
+    ]);
+
+    expect(schema.properties._id.type).toBe('objectId');
   });
 
   it('should return an error if getting schema fails', async () => {

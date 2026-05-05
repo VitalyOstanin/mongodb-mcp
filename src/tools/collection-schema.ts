@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ObjectId } from 'mongodb';
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
 import { generateTempFilePath } from '../utils/streaming.js';
@@ -19,9 +20,6 @@ const collectionSchemaSchema = z.object({
 
 export type CollectionSchemaParams = z.infer<typeof collectionSchemaSchema>;
 
-// MongoDB documents can have any structure, so we need to use any for the schema inference
-
-// Define the types for schema inference
 interface PropertySchema {
   type: string;
   anyOf?: Array<{ type: string }>;
@@ -32,72 +30,35 @@ interface SchemaInferenceResult {
   required: string[];
 }
 
-// Helper function to infer schema from an array of documents
-function inferSchema(documents: unknown[]): SchemaInferenceResult {
-  if (documents.length === 0) {
-    return { properties: {}, required: [] };
+// Strict ISO 8601 (date-only or date+time). new Date('123') happily produces
+// year 0123-01-01, so anything we accept must look like ISO at minimum.
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+function isLikelyIsoDate(value: string): boolean {
+  if (!ISO_DATE_PATTERN.test(value)) {
+    return false;
   }
 
-  const mergedSchema: SchemaInferenceResult = { properties: {}, required: [] };
+  const parsed = Date.parse(value);
 
-  for (const doc of documents) {
-    if (doc && typeof doc === 'object') {
-      for (const [key, value] of Object.entries(doc)) {
-      // Check if property doesn't exist yet; this condition is necessary because Record<string, PropertySchema>
-      // can have undefined values for keys that don't exist
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!mergedSchema.properties[key]) {
-        mergedSchema.properties[key] = { type: getTypeOfValue(value) };
-      } else {
-        // If property exists, make sure type is compatible
-        const currentType = mergedSchema.properties[key].type;
-        const valueType = getTypeOfValue(value);
-
-        if (currentType !== valueType) {
-          // Handle mixed types by using the most general type
-          mergedSchema.properties[key].type = getMoreGeneralType(currentType, valueType);
-          if (!mergedSchema.properties[key].anyOf) {
-            mergedSchema.properties[key].anyOf = [
-              { type: currentType },
-              { type: valueType },
-            ];
-          } else if (!mergedSchema.properties[key].anyOf.some((t: { type: string }) => t.type === valueType)) {
-            mergedSchema.properties[key].anyOf.push({ type: valueType });
-          }
-        }
-      }
-
-      // Add to required if not null/undefined in sample document
-      if (value !== undefined && value !== null && !mergedSchema.required.includes(key)) {
-        mergedSchema.required.push(key);
-      }
-    }
-  }
+  return Number.isFinite(parsed);
 }
 
-  return mergedSchema;
-}
-
-// MongoDB documents can contain any type of value, making it impossible to define a specific type
-
-// MongoDB documents can contain any type of value, making it impossible to define a specific type
-
-// Helper function to determine the type of a value
 function getTypeOfValue(value: unknown): string {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
   if (value instanceof Date) return 'date';
-  // Check for MongoDB ObjectId
-  if (value && typeof value === 'object' && '_bsontype' in value && value._bsontype === 'ObjectID') return 'objectId';
-  // Check for other BSON types like Decimal128, etc.
-  if (value && typeof value === 'object' && '_bsontype' in value && typeof value._bsontype === 'string') return value._bsontype.toLowerCase();
+
+  if (value instanceof ObjectId) return 'objectId';
+
+  // Other BSON types (Decimal128, Long, Binary, ...) carry _bsontype as a string.
+  if (value && typeof value === 'object' && '_bsontype' in value && typeof value._bsontype === 'string') {
+    return value._bsontype.toLowerCase();
+  }
 
   switch (typeof value) {
     case 'string':
-      // Check if it's a date string
-      if (isValidDate(value)) return 'date';
-
-      return 'string';
+      return isLikelyIsoDate(value) ? 'date' : 'string';
     case 'number':
       return Number.isInteger(value) ? 'integer' : 'number';
     case 'object':
@@ -114,36 +75,118 @@ function getTypeOfValue(value: unknown): string {
       return 'function';
   }
 
-  // Default fallback type
   return typeof value;
 }
 
-// Helper function to get a more general type when values have different types
 function getMoreGeneralType(type1: string, type2: string): string {
-  // If one is integer and the other is number, use number
   if ((type1 === 'integer' && type2 === 'number') || (type1 === 'number' && type2 === 'integer')) {
     return 'number';
   }
 
-  // If either is object, use object
   if (type1 === 'object' || type2 === 'object') {
     return 'object';
   }
 
-  // Otherwise, use 'mixed' or 'union'
   return 'mixed';
 }
 
-// Helper function to check if a string is a valid date
-function isValidDate(dateString: string): boolean {
-  // Check if it matches ISO date format or other standard formats
-  const date = new Date(dateString);
+export function inferSchema(documents: unknown[]): SchemaInferenceResult {
+  if (documents.length === 0) {
+    return { properties: {}, required: [] };
+  }
 
-  return date.toString() !== 'Invalid Date' && !isNaN(date.getTime());
+  const properties: Record<string, PropertySchema> = {};
+  const typesPerKey = new Map<string, Set<string>>();
+  const presentCount = new Map<string, number>();
+
+  for (const doc of documents) {
+    if (!doc || typeof doc !== 'object') {
+      continue;
+    }
+
+    for (const [key, value] of Object.entries(doc)) {
+      const valueType = getTypeOfValue(value);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!properties[key]) {
+        properties[key] = { type: valueType };
+        typesPerKey.set(key, new Set([valueType]));
+      } else {
+        const seenTypes = typesPerKey.get(key)!;
+
+        if (!seenTypes.has(valueType)) {
+          seenTypes.add(valueType);
+          // Type already differs from the first one we saw -- promote it.
+          if (seenTypes.size === 2) {
+            properties[key].type = getMoreGeneralType(properties[key].type, valueType);
+            properties[key].anyOf = Array.from(seenTypes).map((t) => ({ type: t }));
+          } else {
+            properties[key].type = 'mixed';
+            properties[key].anyOf = Array.from(seenTypes).map((t) => ({ type: t }));
+          }
+        }
+      }
+
+      if (value !== undefined && value !== null) {
+        presentCount.set(key, (presentCount.get(key) ?? 0) + 1);
+      }
+    }
+  }
+
+  const required: string[] = [];
+
+  for (const [key, count] of presentCount) {
+    if (count === documents.length) {
+      required.push(key);
+    }
+  }
+
+  return { properties, required };
 }
 
-// Export the registration function for the server
-// The client parameter is required to match the registration function signature used by other tools
+async function sampleDocuments(
+  client: MongoDBClient,
+  database: string,
+  collectionName: string,
+  sampleSize: number,
+) {
+  const db = client.getDatabase(database);
+  const collection = db.collection(collectionName);
+
+  return collection.find({}).limit(sampleSize).toArray();
+}
+
+interface SchemaResponse {
+  database: string;
+  collection: string;
+  sampleSize: number;
+  schema: SchemaInferenceResult;
+  message?: string;
+}
+
+function buildResponse(
+  database: string,
+  collection: string,
+  documents: unknown[],
+  requestedSampleSize: number,
+): SchemaResponse {
+  if (documents.length === 0) {
+    return {
+      database,
+      collection,
+      sampleSize: requestedSampleSize,
+      schema: { properties: {}, required: [] },
+      message: 'No documents found in the collection to infer schema',
+    };
+  }
+
+  return {
+    database,
+    collection,
+    sampleSize: documents.length,
+    schema: inferSchema(documents),
+  };
+}
+
 export function registerCollectionSchemaTool(server: McpServer, client: MongoDBClient) {
   server.registerTool(
     'collection-schema',
@@ -161,41 +204,14 @@ export function registerCollectionSchemaTool(server: McpServer, client: MongoDBC
       }
 
       try {
-        const db = client.getDatabase(params.database);
-        const collection = db.collection(params.collection);
+        const documents = await sampleDocuments(client, params.database, params.collection, params.sampleSize);
+        const response = buildResponse(params.database, params.collection, documents, params.sampleSize);
 
         if (params.saveToFile) {
-          // For saving to file, fetch documents and process
-          const documents = await collection.find({}).limit(params.sampleSize).toArray();
-          let response;
-
-          if (documents.length === 0) {
-            response = {
-              database: params.database,
-              collection: params.collection,
-              sampleSize: params.sampleSize,
-              schema: { properties: {}, required: [] },
-              message: 'No documents found in the collection to infer schema',
-            };
-          } else {
-            // Infer schema from the documents
-            const schema = inferSchema(documents);
-
-            response = {
-              database: params.database,
-              collection: params.collection,
-              sampleSize: documents.length, // Return actual sample size
-              schema,
-            };
-          }
-
           const filePath = params.filePath ?? generateTempFilePath();
-          // Ensure directory exists
           const dir = dirname(filePath);
 
           await mkdir(dir, { recursive: true });
-
-          // Write response to file
           await writeFile(filePath, JSON.stringify(response, null, 2), 'utf8');
 
           return toolSuccess({
@@ -205,34 +221,9 @@ export function registerCollectionSchemaTool(server: McpServer, client: MongoDBC
             collection: params.collection,
             message: response.message ?? 'Schema inference completed',
           });
-        } else {
-          // For in-memory results (when not saving to file), use the original approach but with a reasonable limit
-          // Sample documents from the collection
-          const documents = await collection.find({}).limit(params.sampleSize).toArray();
-          let response;
-
-          if (documents.length === 0) {
-            response = {
-              database: params.database,
-              collection: params.collection,
-              sampleSize: params.sampleSize,
-              schema: { properties: {}, required: [] },
-              message: 'No documents found in the collection to infer schema',
-            };
-          } else {
-            // Infer schema from the documents
-            const schema = inferSchema(documents);
-
-            response = {
-              database: params.database,
-              collection: params.collection,
-              sampleSize: documents.length, // Return actual sample size
-              schema,
-            };
-          }
-
-          return toolSuccess(response);
         }
+
+        return toolSuccess(response);
       } catch (error) {
         return toolError(error);
       }
