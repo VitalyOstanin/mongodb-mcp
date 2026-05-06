@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.6.0] - 2026-05-06
+
+### Added
+
+- Codecov upload from the unit test job (`test:coverage` script + `codecov-action@v6` SHA-pinned, gated to the 22.x matrix entry).
+- Dedicated `audit` job — `npm audit --omit=dev --audit-level=high` as a blocking check on production deps; advisory pass on the full tree.
+- Smoke pack-and-install step in the publish workflow: builds a real tarball, installs into a clean throwaway project, exercises the bin entry with `--help` before publish.
+- README sections "Security considerations" and "Concurrency considerations" (en + ru): TLS for remote clusters, least-privilege MongoDB roles, env-var connection strings, server-side JS off, `chmod 700` on `MONGODB_MCP_EXPORT_DIR`; documented absence of cross-tool transactions, singleton client semantics, snapshot nature of `getConnectionInfo`, `wx`-flag write semantics.
+
+### Changed
+
+- CI hardening: top-level `permissions: contents: read`, `concurrency` group with `cancel-in-progress`, `fail-fast: false` on the build matrix.
+- Removed stale `eslint-disable @typescript-eslint/no-unnecessary-condition` directive in `collection-schema.ts` that was itself emitting a warning.
+
+### Breaking
+
+- `drop-collection` now requires the literal `confirmation: "I_KNOW_THIS_IS_DESTRUCTIVE"` parameter. Calls without it are rejected by Zod validation before the handler runs. MCP hosts must surface a confirmation prompt to the user and pass the literal explicitly.
+- `drop-index` now requires the same confirmation literal under the same rules.
+- `delete` requires the confirmation literal **only when `multi=true`** (bulk delete via `deleteMany`). Single-document deletes (`multi=false` / default) remain ergonomic and do not require the literal.
+- The literal value is centralised in `src/utils/confirmation.ts`.
+
+### Removed
+
+- `CONTRIBUTING.md`. Personal-use server with no external contributors — the doc had no audience. Removed both READMEs' references to it.
+
 ## [0.5.0] - 2026-05-06
 
 ### Added
