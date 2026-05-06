@@ -17,7 +17,7 @@ class JsonLinesTransform extends Transform {
   // Using 'any' for chunk type and callback parameters because Transform stream interfaces
   // require flexible typing for the data being processed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _transform(chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void {
+  override _transform(chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void {
     try {
       // For the first document, don't add a newline
       if (this.isFirst) {
@@ -53,7 +53,7 @@ class JsonArrayTransform extends Transform {
   // Using 'any' for chunk type and callback parameters because Transform stream interfaces
   // require flexible typing for the data being processed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _transform(chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void {
+  override _transform(chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void {
     try {
       let result: string;
 
@@ -73,7 +73,7 @@ class JsonArrayTransform extends Transform {
   // Using 'any' for callback parameter because Transform stream interfaces
   // require flexible typing for the data being processed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _flush(callback: (error?: Error | null, data?: any) => void): void {
+  override _flush(callback: (error?: Error | null, data?: any) => void): void {
     // Close the JSON array when the stream is done
     callback(null, this.isFirst ? '[]' : '\n]');
   }

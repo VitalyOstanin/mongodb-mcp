@@ -61,7 +61,7 @@ describe('Insert Tool', () => {
     registerInsertTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const params = {
@@ -97,7 +97,7 @@ describe('Insert Tool', () => {
     registerInsertTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const params = {
@@ -136,7 +136,7 @@ describe('Insert Tool', () => {
     registerInsertTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const params = {
@@ -166,7 +166,7 @@ describe('Insert Tool', () => {
 
     registerInsertTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({
@@ -188,7 +188,7 @@ describe('Insert Tool', () => {
     registerInsertTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const params = {

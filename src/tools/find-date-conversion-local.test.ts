@@ -136,10 +136,10 @@ describe('convertStringDatesToObjects', () => {
 
     expect(Array.isArray(result.$and)).toBe(true);
     expect(result.$and).toHaveLength(2);
-    expect(result.$and[0].createdAt!.$gte).toBeInstanceOf(Date);
-    expect(result.$and[0].createdAt!.$gte.toISOString()).toBe('2025-11-14T00:00:00.000Z');
-    expect(result.$and[1].updatedAt!.$lt).toBeInstanceOf(Date);
-    expect(result.$and[1].updatedAt!.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
+    expect(result.$and[0]!.createdAt!.$gte).toBeInstanceOf(Date);
+    expect(result.$and[0]!.createdAt!.$gte.toISOString()).toBe('2025-11-14T00:00:00.000Z');
+    expect(result.$and[1]!.updatedAt!.$lt).toBeInstanceOf(Date);
+    expect(result.$and[1]!.updatedAt!.$lt.toISOString()).toBe('2025-11-15T00:00:00.000Z');
   });
 
   it('should preserve $or and $nor arrays', () => {
@@ -160,7 +160,7 @@ describe('convertStringDatesToObjects', () => {
     expect(Array.isArray(result.$or)).toBe(true);
     expect(Array.isArray(result.$nor)).toBe(true);
     expect(result.$or[0]).toEqual({ status: 'active' });
-    expect(result.$or[1].createdAt!.$gte).toBeInstanceOf(Date);
+    expect(result.$or[1]!.createdAt!.$gte).toBeInstanceOf(Date);
     expect(result.$nor[0]).toEqual({ deleted: true });
   });
 
@@ -189,9 +189,9 @@ describe('convertStringDatesToObjects', () => {
 
     expect(result.user.profile.createdAt).toBeInstanceOf(Date);
     expect((result.user.profile.createdAt).toISOString()).toBe('2025-11-14T10:31:26.517Z');
-    expect(result.posts[0].createdAt).toBeInstanceOf(Date);
-    expect((result.posts[0].createdAt as Date).toISOString()).toBe('2025-11-15T10:31:26.517Z');
-    expect(result.posts[1].createdAt).toBe('invalid date');
+    expect(result.posts[0]!.createdAt).toBeInstanceOf(Date);
+    expect((result.posts[0]!.createdAt as Date).toISOString()).toBe('2025-11-15T10:31:26.517Z');
+    expect(result.posts[1]!.createdAt).toBe('invalid date');
   });
 
   it('should convert dates in all objects, including non-operator ones', () => {

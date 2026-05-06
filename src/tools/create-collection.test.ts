@@ -47,7 +47,7 @@ describe('Create Collection Tool', () => {
 
     registerCreateCollectionTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({
@@ -65,7 +65,7 @@ describe('Create Collection Tool', () => {
 
     registerCreateCollectionTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({
@@ -91,7 +91,7 @@ describe('Create Collection Tool', () => {
 
     registerCreateCollectionTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const options = { capped: true, size: 1024 };
@@ -118,7 +118,7 @@ describe('Create Collection Tool', () => {
 
     registerCreateCollectionTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({

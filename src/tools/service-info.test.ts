@@ -42,7 +42,7 @@ describe('serviceInfo Tool', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     // Get the registered implementation function
-    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    const [, , implementation] = mockServer.registerTool.mock.calls[0]!;
     // Call the implementation
     const result = await implementation();
     const parsedResult = JSON.parse(result.content[0].text);
@@ -69,7 +69,7 @@ describe('serviceInfo Tool', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     // Get the registered implementation function
-    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    const [, , implementation] = mockServer.registerTool.mock.calls[0]!;
     // Call the implementation
     const result = await implementation();
     const parsedResult = JSON.parse(result.content[0].text);
@@ -95,7 +95,7 @@ describe('serviceInfo Tool', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     // Get the registered implementation function
-    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    const [, , implementation] = mockServer.registerTool.mock.calls[0]!;
     // Call the implementation
     const result = await implementation();
     const parsedResult = JSON.parse(result.content[0].text);
@@ -126,7 +126,7 @@ describe('serviceInfo Tool', () => {
     registerServiceInfoTool(mockServer, mockClient);
 
     // Get the registered implementation function
-    const [, , implementation] = mockServer.registerTool.mock.calls[0];
+    const [, , implementation] = mockServer.registerTool.mock.calls[0]!;
     // Call the implementation
     const result = await implementation();
     const parsedResult = JSON.parse(result.content[0].text);

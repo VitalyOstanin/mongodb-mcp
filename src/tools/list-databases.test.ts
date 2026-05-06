@@ -53,7 +53,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,7 +83,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,7 +126,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,7 +164,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -195,7 +195,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -219,7 +219,7 @@ describe('ListDatabases Tool', () => {
     registerListDatabasesTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

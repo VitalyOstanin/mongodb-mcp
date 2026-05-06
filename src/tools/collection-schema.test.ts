@@ -53,7 +53,7 @@ describe('CollectionSchema Tool', () => {
     registerCollectionSchemaTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +89,7 @@ describe('CollectionSchema Tool', () => {
     registerCollectionSchemaTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,7 +139,7 @@ describe('CollectionSchema Tool', () => {
     registerCollectionSchemaTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -180,7 +180,7 @@ describe('CollectionSchema Tool', () => {
     registerCollectionSchemaTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -214,7 +214,7 @@ describe('CollectionSchema Tool', () => {
 
     registerCollectionSchemaTool(mockServer, mockClient);
 
-    const handler = mockServer.registerTool.mock.calls[0][2] as (
+    const handler = mockServer.registerTool.mock.calls[0]![2] as (
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params: any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -235,7 +235,7 @@ describe('CollectionSchema Tool', () => {
       { v: 'user-id-abc-123' },
     ]);
 
-    expect(schema.properties.v.type).toBe('string');
+    expect(schema.properties.v?.type).toBe('string');
   });
 
   it('should detect ISO date strings as date', () => {
@@ -244,7 +244,7 @@ describe('CollectionSchema Tool', () => {
       { ts: '2025-11-15T10:31:26.517Z' },
     ]);
 
-    expect(schema.properties.ts.type).toBe('date');
+    expect(schema.properties.ts?.type).toBe('date');
   });
 
   it('should detect MongoDB ObjectId via instanceof', () => {
@@ -253,7 +253,7 @@ describe('CollectionSchema Tool', () => {
       { _id: new ObjectId(), name: 'b' },
     ]);
 
-    expect(schema.properties._id.type).toBe('objectId');
+    expect(schema.properties._id?.type).toBe('objectId');
   });
 
   it('should return an error if getting schema fails', async () => {
@@ -263,7 +263,7 @@ describe('CollectionSchema Tool', () => {
     registerCollectionSchemaTool(mockServer, mockClient);
 
     // Get the tool handler function
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // Using 'any' for params and return type because we're accessing the registered tool handler
     // from mock calls, and the exact type is complex to define since it comes from the tool registration system
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

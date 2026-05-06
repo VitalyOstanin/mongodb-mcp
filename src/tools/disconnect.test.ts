@@ -40,7 +40,7 @@ describe('disconnectTool', () => {
     registerDisconnectTool({ registerTool: mockRegisterTool } as any, mockClient);
 
     // Get the implementation function from the registerTool call
-    const [, , implementation] = mockRegisterTool.mock.calls[0];
+    const [, , implementation] = mockRegisterTool.mock.calls[0]!;
 
     // Arrange
     mockClient.getConnectionInfo.mockReturnValue({ isConnected: true });
@@ -69,7 +69,7 @@ describe('disconnectTool', () => {
     registerDisconnectTool({ registerTool: mockRegisterTool } as any, mockClient);
 
     // Get the implementation function from the registerTool call
-    const [, , implementation] = mockRegisterTool.mock.calls[0];
+    const [, , implementation] = mockRegisterTool.mock.calls[0]!;
 
     // Arrange
     mockClient.getConnectionInfo.mockReturnValue({
@@ -101,7 +101,7 @@ describe('disconnectTool', () => {
     registerDisconnectTool({ registerTool: mockRegisterTool } as any, mockClient);
 
     // Get the implementation function from the registerTool call
-    const [, , implementation] = mockRegisterTool.mock.calls[0];
+    const [, , implementation] = mockRegisterTool.mock.calls[0]!;
 
     // Arrange
     mockClient.getConnectionInfo.mockReturnValue({

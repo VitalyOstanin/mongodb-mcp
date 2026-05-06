@@ -26,9 +26,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MongoDBConfig 
     throw new Error(`MongoDB configuration error: ${issues}`);
   }
 
+  // exactOptionalPropertyTypes: only set defaultDatabase when actually provided.
   return {
     connectionString: parsed.data.MONGODB_MCP_CONNECTION_STRING,
-    defaultDatabase: parsed.data.MONGODB_MCP_DEFAULT_DATABASE,
+    ...(parsed.data.MONGODB_MCP_DEFAULT_DATABASE !== undefined
+      ? { defaultDatabase: parsed.data.MONGODB_MCP_DEFAULT_DATABASE }
+      : {}),
     timezone: parsed.data.MONGODB_MCP_TIMEZONE ?? DEFAULT_TIMEZONE,
   };
 }

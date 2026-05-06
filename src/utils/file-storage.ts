@@ -47,9 +47,10 @@ export async function processWithFileStorage<T>(
   filePath?: string,
 ): Promise<FileStorageResult<T>> {
   if (saveToFile) {
+    // exactOptionalPropertyTypes: only set filePath when actually provided.
     const savedPath = await saveDataToFile({
       data,
-      filePath,
+      ...(filePath !== undefined ? { filePath } : {}),
     });
 
     return {

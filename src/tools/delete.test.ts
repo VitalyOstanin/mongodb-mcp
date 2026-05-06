@@ -51,7 +51,7 @@ describe('Delete Tool', () => {
 
     registerDeleteTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({
@@ -71,7 +71,7 @@ describe('Delete Tool', () => {
 
     registerDeleteTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const filter = { name: 'foo' };
@@ -101,7 +101,7 @@ describe('Delete Tool', () => {
 
     registerDeleteTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const filter = { archived: true };
@@ -130,7 +130,7 @@ describe('Delete Tool', () => {
 
     registerDeleteTool(mockServer, mockClient);
 
-    const registerCall = mockServer.registerTool.mock.calls[0];
+    const registerCall = mockServer.registerTool.mock.calls[0]!;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = registerCall[2] as (params: any) => Promise<any>;
     const result = await handler({
