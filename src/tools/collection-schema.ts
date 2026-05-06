@@ -105,7 +105,6 @@ export function inferSchema(documents: unknown[]): SchemaInferenceResult {
     for (const [key, value] of Object.entries(doc)) {
       const valueType = getTypeOfValue(value);
 
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!properties[key]) {
         properties[key] = { type: valueType };
         typesPerKey.set(key, new Set([valueType]));
