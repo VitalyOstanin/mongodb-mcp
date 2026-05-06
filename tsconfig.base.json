@@ -5,6 +5,7 @@
     "lib": [
       "ES2022"
     ],
+    "types": ["node"],
     "strict": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
