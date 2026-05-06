@@ -146,7 +146,7 @@ The MCP server does not provide transactional or ordering guarantees beyond what
 
 ## Local Development
 
-Quick reference for working with the source. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
+Quick reference for working with the source.
 
 Prerequisites:
 
