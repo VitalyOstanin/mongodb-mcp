@@ -2,10 +2,12 @@ import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
+import { destructiveConfirmationSchema } from '../utils/confirmation.js';
 
 const dropCollectionSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name to drop'),
+  confirmation: destructiveConfirmationSchema,
 });
 
 export type DropCollectionParams = z.infer<typeof dropCollectionSchema>;
@@ -15,7 +17,7 @@ export function registerDropCollectionTool(server: McpServer, client: MongoDBCli
     'drop-collection',
     {
       title: 'Drop Collection',
-      description: 'Drop a collection from a MongoDB database. Use for: Removing collections that are no longer needed.',
+      description: 'Drop a collection from a MongoDB database. Use for: Removing collections that are no longer needed. Requires the confirmation literal to be passed explicitly to prevent accidental data loss.',
       inputSchema: dropCollectionSchema.shape,
       annotations: {
         readOnlyHint: false,

@@ -2,11 +2,13 @@ import { z } from 'zod';
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { MongoDBClient } from '../mongodb-client.js';
 import { toolSuccess, toolError } from '../utils/tool-response.js';
+import { destructiveConfirmationSchema } from '../utils/confirmation.js';
 
 const dropIndexSchema = z.object({
   database: z.string().describe('Database name'),
   collection: z.string().describe('Collection name'),
   index: z.union([z.string(), z.record(z.string(), z.unknown())]).describe('Index name or index specification document to drop'),
+  confirmation: destructiveConfirmationSchema,
 });
 
 export type DropIndexParams = z.infer<typeof dropIndexSchema>;
@@ -16,7 +18,7 @@ export function registerDropIndexTool(server: McpServer, client: MongoDBClient) 
     'drop-index',
     {
       title: 'Drop Index',
-      description: 'Drop an index from a MongoDB collection. Use for: Removing indexes that are no longer needed or causing performance issues.',
+      description: 'Drop an index from a MongoDB collection. Use for: Removing indexes that are no longer needed or causing performance issues. Requires the confirmation literal to be passed explicitly.',
       inputSchema: dropIndexSchema.shape,
       annotations: {
         readOnlyHint: false,

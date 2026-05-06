@@ -110,6 +110,7 @@ describe('Delete Tool', () => {
       collection: 'users',
       filter,
       multi: true,
+      confirmation: 'I_KNOW_THIS_IS_DESTRUCTIVE',
     });
 
     expect(mockCollection.deleteMany).toHaveBeenCalledWith(filter);
