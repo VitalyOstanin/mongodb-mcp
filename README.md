@@ -28,6 +28,8 @@ MCP server for comprehensive MongoDB integration with the following capabilities
 - [MCP Tools](#mcp-tools)
   - [Read-Only Mode Tools](#read-only-mode-tools)
   - [Non-Read-Only Mode Tools](#non-read-only-mode-tools)
+- [Security considerations](#security-considerations)
+- [Concurrency considerations](#concurrency-considerations)
 - [Local Development](#local-development)
 
 ## Requirements
@@ -122,6 +124,25 @@ To use this MCP server with [Cline](https://github.com/cline/cline) extension in
 - Aggregation stages that modify data: `$out`, `$merge`
 
 The following aggregation stages are restricted in read-only mode: `$out`, `$merge`. These stages are only available when the server is running in read-write mode.
+
+## Security considerations
+
+Recommendations for safe production use of the MCP server:
+
+- **Use TLS for remote MongoDB clusters.** Prefer `mongodb+srv://` (TLS is implied) or set `tls=true` explicitly in a regular `mongodb://` connection string. Plaintext connections expose credentials and query payloads to anyone on the network path.
+- **Apply least-privilege roles.** Create a dedicated MongoDB user with read-only access to only the databases you need. Avoid `root`, `dbAdmin`, or any role that grants `eval` / scripting privileges. Default to read-only mode unless write tools are required.
+- **Keep the connection string out of MCP host args.** Configure `MONGODB_MCP_CONNECTION_STRING` via environment variables (e.g., `.env` file) rather than passing it through `args` of the MCP host configuration — `args` are typically logged when the host launches the server, leaking the password.
+- **Disable server-side JavaScript.** The MCP server already blocks `$where`, `$function`, and `$accumulator` operators in queries. For defence in depth, run the MongoDB server itself with `--javascriptEnabled=false` (or the equivalent `security.javascriptEnabled: false` in `mongod.conf`).
+- **Restrict the export directory.** When using file-export tools, set `MONGODB_MCP_EXPORT_DIR` to a directory accessible only to the MCP user (`chmod 700`). Other users on the machine should not be able to read the dumps that write tools produce.
+
+## Concurrency considerations
+
+The MCP server does not provide transactional or ordering guarantees beyond what MongoDB itself enforces. Plan multi-step interactions accordingly:
+
+- **Tools are independent operations.** Each call runs in its own implicit context; the server does not start multi-statement transactions or share a `ClientSession` across calls. Design atomic multi-step flows by encoding preconditions into the `filter` of the same `update` / `delete` call, rather than chaining a separate `find` followed by a mutating call.
+- **Singleton client, parallel operations.** A single `MongoClient` is shared across all tool calls. Only `connect` / `disconnect` are serialised through an internal mutex; ordinary operations (`find`, `aggregate`, `insert`, etc.) execute concurrently against the cluster, with no cross-tool ordering imposed by the MCP server.
+- **Connection state is a snapshot.** `getConnectionInfo()` returns the state at the moment of the call. For decisions that depend on connectivity, rely on the result of the next operation rather than a preceding `isConnected` check — the connection may drop between the two.
+- **File-export uses `wx`.** Tools that write files open the target with the `wx` flag and will not overwrite an existing file. Concurrent calls targeting the same `filePath` will fail with `EEXIST`; callers must pick a fresh path (e.g., include a timestamp or per-call suffix).
 
 ## Local Development
 
