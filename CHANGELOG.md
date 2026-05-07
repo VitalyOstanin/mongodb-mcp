@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.6.1] - 2026-05-07
 
 ### Added
 - `LICENSE` (MIT) file in repository root (referenced from `package.json` and now shipped in the published tarball).
