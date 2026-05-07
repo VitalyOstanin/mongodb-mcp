@@ -3,7 +3,7 @@
   "version": "0.6.0",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "postbuild": "node -e \"require('fs').chmodSync('dist/index.js', 0o755)\"",
+    "postbuild": "node -e \"require('fs').chmodSync('dist/index.js', 0o755)\" && cp package.json dist/package.json",
     "dev": "tsx watch index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json",
@@ -17,7 +17,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:up": "podman-compose -f compose.yaml up -d",
     "test:integration:down": "podman-compose -f compose.yaml down",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run test && npm audit --omit=dev --audit-level=high && npm run build"
   },
   "keywords": [
     "mcp",
@@ -33,8 +33,10 @@
   "description": "MCP server for comprehensive MongoDB integration: database operations, collections, aggregation, queries, connection management, monitoring",
   "type": "module",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0",
+    "npm": ">=10.0.0"
   },
+  "packageManager": "npm@11.12.1",
   "bin": {
     "mongodb-mcp": "dist/index.js"
   },
@@ -51,7 +53,8 @@
     "dist/**/*.d.ts",
     "dist/**/*.json",
     "README.md",
-    "README-ru.md"
+    "README-ru.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
@@ -73,7 +76,6 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.46.0",
-    "vitest": "^4.1.5",
-    "zod-to-json-schema": "^3.24.6"
+    "vitest": "^4.1.5"
   }
 }

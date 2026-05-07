@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `LICENSE` (MIT) file in repository root (referenced from `package.json` and now shipped in the published tarball).
+- `--version` / `-v` CLI flag in `index.ts` (executes before yargs parsing) so smoke tests and humans can verify the installed binary without running the stdio server.
+
+### Changed
+- Strengthened `prepublishOnly` to run lint, typecheck, tests, audit, and build (was: `npm run build` only).
+- Aligned `.github/dependabot.yml` with the rest of the MCP suite: replaced the historical `jest` group (left over from the Jest→Vitest migration) with a `vitest` group covering `vitest` and `@vitest/*`.
+- `postbuild` now also copies `package.json` to `dist/package.json` so `--version` reads the manifest from the published tarball.
+- Added `engines.npm >=10.0.0` and pinned `packageManager` to `npm@11.12.1` for parity with `postgres-mcp` and `mcp-chrome-debugger-protocol`.
+
+### Removed
+- Unused `zod-to-json-schema` devDependency (no source/test imports — leftover from the SDK migration that landed before structured tools).
+
 ## [0.6.0] - 2026-05-06
 
 ### Added

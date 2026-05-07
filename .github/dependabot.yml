@@ -21,11 +21,10 @@ updates:
           - "eslint"
           - "@eslint/*"
           - "typescript-eslint"
-      jest:
+      vitest:
         patterns:
-          - "jest"
-          - "@types/jest"
-          - "ts-jest"
+          - "vitest"
+          - "@vitest/*"
     commit-message:
       prefix: chore
       include: scope
