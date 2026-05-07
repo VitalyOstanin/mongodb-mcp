@@ -3,6 +3,7 @@
 Также доступно на английском: [README.md](README.md)
 
 [![CI](https://github.com/VitalyOstanin/mongodb-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyOstanin/mongodb-mcp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/VitalyOstanin/mongodb-mcp/graph/badge.svg?branch=master)](https://codecov.io/gh/VitalyOstanin/mongodb-mcp)
 [![npm version](https://img.shields.io/npm/v/@vitalyostanin/mongodb-mcp.svg)](https://www.npmjs.com/package/@vitalyostanin/mongodb-mcp)
 
 **Примечание**: Этот проект разработан для моих личных нужд. Я не планирую расширять его функциональность возможностями, которые я не использую и не могу проверить. Вы свободны предлагать идеи и создавать pull request'ы, но я не гарантирую, что всё будет принято.
