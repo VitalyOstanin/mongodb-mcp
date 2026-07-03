@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.2] - 2026-07-03
+
+### Changed
+- Dependency maintenance: bumped runtime and dev dependencies to latest (`mongodb` 7.4.0, `tsx` 4.23.0, plus `eslint` / `vitest` / `typescript-eslint` / `@types/node` 26). Cleared high-severity npm advisories via lockfile updates. No change to the server's own API or behavior.
+- CI: switched the Codecov upload to OIDC (dropped `CODECOV_TOKEN`), and bumped `actions/checkout` to v7 and `codecov/codecov-action` to v7.
+
 ## [0.6.1] - 2026-05-07
 
 ### Added
