@@ -63,7 +63,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "luxon": "^3.7.2",
     "mongodb": "^7.5.0",
-    "yargs": "^18.0.0",
+    "yargs": "^18.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
