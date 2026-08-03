@@ -60,7 +60,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "luxon": "^3.7.2",
     "mongodb": "^7.5.0",
     "yargs": "^18.0.0",
